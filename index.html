@@ -1,0 +1,3291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>여조안테나</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── IBM Carbon Design System ─────────────────────────── */
+    :root {
+      /* 정치 계파 고정색 */
+      --dem:    #0055a5;
+      --ppp:    #c8000a;
+      --dem-bg: rgba(0,85,165,0.06);
+      --ppp-bg: rgba(200,0,10,0.06);
+
+      /* Carbon 팔레트 */
+      --bg:     #f4f4f4;
+      --card:   #ffffff;
+      --border: #e0e0e0;
+      --text:   #161616;
+      --muted:  #525252;
+      --subtle: #8c8c8c;
+      --accent: #0f62fe;
+      --accent2:#edf5ff;
+      --shadow: none;
+
+      /* Carbon semantic */
+      --success: #24a148;
+      --warning: #f1c21b;
+      --error:   #da1e28;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans KR', 'IBM Plex Sans', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      letter-spacing: 0.16px;
+      line-height: 1.5;
+    }
+
+    /* ── 헤더 (Carbon top-nav) ───────────────────────────── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 48px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    header h1 { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 0.16px; }
+    header span { color: var(--muted); font-size: 12px; letter-spacing: 0.32px; }
+    header .header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+    /* ── 컨트롤 바 ───────────────────────────────────────── */
+    .controls {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 28px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .ctrl-label { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.32px; text-transform: uppercase; }
+    select {
+      background: var(--card); color: var(--text);
+      border: none; border-bottom: 1px solid var(--border);
+      padding: 6px 10px; font-size: 13px; outline: none; cursor: pointer;
+      font-family: inherit; border-radius: 0;
+    }
+    select:focus { border-bottom: 2px solid var(--accent); outline: none; }
+    button {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 0;
+      padding: 7px 15px; font-size: 14px; cursor: pointer; font-weight: 600;
+      font-family: inherit; letter-spacing: 0.16px; line-height: 1.29;
+      transition: background 0.1s;
+    }
+    button:hover { background: #0050e6; }
+    button.sec {
+      background: var(--card); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.sec:hover { background: var(--accent2); border-color: var(--accent); color: var(--accent); }
+
+    /* ── 메인 레이아웃 ────────────────────────────────────── */
+    .main { padding: 20px 28px; max-width: 1220px; margin: 0 auto; }
+
+    /* ── 섹션 레이블 (Carbon section-header) ─────────────── */
+    .section-label {
+      display: flex; align-items: center; gap: 10px;
+      margin: 24px 0 12px;
+      padding: 8px 14px;
+      background: var(--card);
+      border-left: 3px solid var(--accent);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label h2 { font-size: 14px; font-weight: 600; color: var(--text); }
+    .badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 0;
+      font-weight: 600; letter-spacing: 0.32px; text-transform: uppercase;
+    }
+    .badge-baseline { background: var(--accent2); color: var(--accent); border: 1px solid #c0d8ff; }
+    .badge-optional { background: #fff8e1; color: #a06000; border: 1px solid #f5d88a; }
+    .section-note { color: var(--subtle); font-size: 11px; margin-left: auto; letter-spacing: 0.32px; }
+
+    /* ── 배너 ─────────────────────────────────────────────── */
+    .banner {
+      border-radius: 0; padding: 9px 16px; margin-bottom: 14px;
+      font-size: 13px; font-weight: 600; display: none;
+      border-left: 3px solid;
+    }
+    .banner.conflict { background: #fdf6dd; border-color: var(--warning); color: #7a6800; }
+    .banner.dem-lead { background: var(--accent2); border-color: var(--dem); color: #002d9c; }
+    .banner.ppp-lead { background: #fff1f1; border-color: var(--ppp); color: #750000; }
+
+    /* ── 계보 트레일 ─────────────────────────────────────── */
+    .lineage-trail {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 9px 14px;
+      margin-bottom: 14px; font-size: 11.5px;
+    }
+    .lt-row { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; margin: 2px 0; }
+    .lt-label { font-weight: 600; font-size: 10px; min-width: 44px; text-transform: uppercase; letter-spacing: 0.32px; }
+    .lt-dem-lbl { color: var(--dem); }
+    .lt-ppp-lbl { color: var(--ppp); }
+    .lt-arrow { color: var(--subtle); font-size: 11px; }
+    .lt-party { padding: 1px 5px; color: var(--subtle); font-size: 11px; }
+    .lt-party.current { font-weight: 600; font-size: 12px; }
+    .lt-dem.current { color: var(--dem); }
+    .lt-ppp.current { color: var(--ppp); }
+
+    /* ── 메트릭 카드 ─────────────────────────────────────── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 1px; margin-bottom: 16px;
+      border: 1px solid var(--border);
+      background: var(--border);
+    }
+    .metric-card {
+      background: var(--card);
+      padding: 16px;
+    }
+    .metric-card .lbl {
+      color: var(--muted); font-size: 10px; margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;
+    }
+    .metric-card .val { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+    .metric-card .sub { color: var(--subtle); font-size: 11px; margin-top: 4px; letter-spacing: 0.32px; font-weight: 500; }
+    .c-dem { color: var(--dem); }
+    .c-ppp { color: var(--ppp); }
+    .c-neu { color: var(--muted); }
+
+    /* ── 카드 그리드 ──────────────────────────────────────── */
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 860px) { .chart-grid { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 16px;
+    }
+    .chart-card.full { grid-column: 1 / -1; }
+    .chart-card h3 {
+      font-size: 12px; font-weight: 600;
+      color: var(--text); margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border);
+      letter-spacing: 0.16px;
+    }
+    .chart-wrap { position: relative; }
+    .chart-wrap canvas { position: absolute; inset: 0; }
+
+    /* ── 탭 (Carbon tab-line style) ─────────────────────── */
+    .tab-bar { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .tab {
+      padding: 8px 16px; border-radius: 0; font-size: 14px;
+      cursor: pointer; border: none; border-bottom: 3px solid transparent;
+      background: transparent; color: var(--muted); font-weight: 400;
+      font-family: inherit; letter-spacing: 0.16px; margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--text); background: var(--bg); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; background: transparent; }
+
+    /* ── 바닥 범위 바 ────────────────────────────────────── */
+    .floor-range { margin-bottom: 14px; }
+    .fr-header { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+    .fr-left { font-weight: 600; }
+    .fr-right { color: var(--muted); }
+    .fr-track {
+      background: var(--border); height: 18px;
+      position: relative; overflow: hidden;
+    }
+    .fr-fill {
+      height: 100%; position: absolute; left: 0;
+    }
+    .fr-floor-line {
+      position: absolute; width: 2px; height: 100%; background: rgba(0,0,0,0.3); top: 0;
+    }
+    .fr-txt-floor {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      font-size: 10px; font-weight: 600; color: #fff;
+    }
+    .fr-txt-cur {
+      position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+      font-size: 10px; font-weight: 600; color: #fff;
+    }
+
+    /* ── 계보 내 바 ───────────────────────────────────────── */
+    .intra-bar { display: flex; height: 26px; overflow: hidden; margin: 8px 0; }
+    .intra-seg {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: #fff; min-width: 28px;
+    }
+
+    /* ── 테이블 ─────────────────────────────────────────── */
+    .history-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .history-tbl th {
+      font-weight: 700;
+      color: var(--muted); text-align: left; padding: 7px 10px;
+      border-bottom: 2px solid var(--border);
+      font-size: 11px; text-transform: uppercase; font-weight: 600;
+      background: var(--bg); letter-spacing: 0.32px;
+    }
+    .history-tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border); font-weight: 500; }
+    .history-tbl tr:hover td { background: var(--bg); }
+    .tag-asm  { background: var(--accent2); color: var(--accent); padding: 1px 6px; font-size: 10px; font-weight: 600; }
+    .tag-lcl  { background: #fff8e1; color: #a06000; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+    .tag-pres  { background: #f5e8ff; color: #5a1080; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+    .tag-metro { background: #defbe6; color: #0a7a30; padding: 1px 6px; font-size: 10px; font-weight: 600; }
+    .elected { color: var(--success); font-weight: 600; }
+    .tbl-group-hdr td {
+      background: var(--bg); color: var(--muted); font-size: 11px;
+      font-weight: 600; padding: 8px 10px; border-top: 2px solid var(--border);
+    }
+
+    /* ── PDF 업로드 ─────────────────────────────────────── */
+    .pdf-drop {
+      border: 2px dashed var(--border);
+      padding: 14px 24px; text-align: center; color: var(--muted);
+      cursor: pointer; transition: all 0.2s; margin-bottom: 14px; display: none;
+      background: var(--card);
+    }
+    .pdf-drop.visible { display: block; }
+    .pdf-drop.drag-over {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent2);
+    }
+    .pdf-drop label { cursor: pointer; }
+    .pdf-drop input[type=file] { display: none; }
+    .pdf-result { font-size: 12px; margin-top: 6px; }
+    .pdf-result.ok { color: var(--success); }
+    .pdf-result.err { color: var(--error); }
+
+    /* ── 신선도 배지 ─────────────────────────────────────── */
+    .freshness-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; font-size: 12px;
+      font-weight: 400; cursor: pointer; border: 1px solid transparent;
+      transition: opacity 0.15s; border-radius: 0; font-family: inherit;
+    }
+    .freshness-badge:hover { opacity: 0.82; }
+    .freshness-badge.fresh  { background: #defbe6; color: #0a5f26; border-color: #a7f0ba; }
+    .freshness-badge.warn   { background: #fff8e1; color: #8a6000; border-color: #f5d88a; }
+    .freshness-badge.stale  { background: #fff1f1; border-color: #ffc2c2; color: #750000; }
+
+    /* ── 선거구획정 경고 배지 ────────────────────────────── */
+    .redistricting-notice {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; font-size: 11px; font-weight: 600;
+      background: #fff8e1; color: #8a5000; border: 1px solid #f5d88a;
+      cursor: help;
+    }
+    .redistricting-notice.renamed {
+      background: #defbe6; color: #0a5f26; border-color: #a7f0ba;
+    }
+    .chart-header-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+    }
+    .chart-header-row h3 { margin: 0; }
+
+    /* ── 동기화 모달 ─────────────────────────────────────── */
+    .sync-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+    .sync-table th { background: var(--bg); padding: 6px 10px;
+                     text-align: left; font-weight: 700; color: var(--muted);
+                     border-bottom: 2px solid var(--border); letter-spacing: 0.32px; text-transform: uppercase; font-size: 11px; }
+    .sync-table td { padding: 6px 10px; border-top: 1px solid var(--border); font-weight: 500; }
+    .sync-badge-ok  { background: #defbe6; color: #0a5f26; padding: 2px 7px;
+                      font-size: 11px; font-weight: 600; }
+    .sync-badge-miss{ background: #fff1f1; color: var(--error); padding: 2px 7px;
+                      font-size: 11px; font-weight: 600; }
+    .sync-log { background: var(--bg); border: 1px solid var(--border);
+                padding: 10px; font-size: 11.5px; font-family: 'IBM Plex Mono', monospace;
+                white-space: pre-wrap; max-height: 160px; overflow-y: auto; margin-top: 10px; }
+
+    /* ── 계파 설정 모달 ──────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(22,22,22,0.5); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card);
+      width: 680px; max-width: 95vw; max-height: 85vh;
+      overflow: hidden; display: flex; flex-direction: column;
+      border: 1px solid var(--border);
+    }
+    .modal-header {
+      padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--accent); color: #fff;
+    }
+    .modal-header h3 { font-size: 14px; font-weight: 400; letter-spacing: 0.16px; }
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); text-align: right; background: var(--bg); }
+    .close-btn {
+      background: none; border: none; color: #fff;
+      font-size: 18px; cursor: pointer; padding: 2px 6px;
+    }
+    .lineage-row {
+      display: grid;
+      grid-template-columns: 130px 120px 110px 80px 60px 28px;
+      gap: 6px; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .lineage-row.header {
+      font-size: 10px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; border-bottom: 2px solid var(--border);
+      padding-bottom: 6px; letter-spacing: 0.32px;
+    }
+    .lineage-row input[type=text] {
+      font-size: 12px; padding: 4px 8px;
+      border: none; border-bottom: 1px solid var(--border);
+      background: var(--bg); width: 100%; font-family: inherit;
+    }
+    .lineage-row input[type=text]:focus { border-bottom: 2px solid var(--accent); outline: none; }
+    .lineage-row select { font-size: 12px; padding: 3px 5px; width: 100%; border-radius: 0; }
+    .inh-wrap { display: flex; align-items: center; gap: 4px; }
+    .inh-val { font-weight: 600; font-size: 11px; min-width: 30px; color: var(--accent); }
+    .del-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--error); cursor: pointer; font-size: 13px; padding: 2px 5px; line-height: 1;
+    }
+    .del-btn:hover { background: #fff1f1; }
+    .add-row-btn {
+      width: 100%; margin-top: 10px; padding: 8px;
+      background: var(--bg); border: 1px dashed var(--border);
+      color: var(--accent); font-weight: 600;
+      cursor: pointer; font-size: 12px; font-family: inherit;
+    }
+    .add-row-btn:hover { background: var(--accent2); border-color: var(--accent); }
+
+    .loading { color: var(--muted); text-align: center; padding: 40px; }
+
+    /* ── 유권자 구조 분석 ────────────────────────────────────── */
+    .seg-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;
+    }
+    @media (max-width: 900px) { .seg-grid { grid-template-columns: 1fr; } }
+    .seg-card {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 14px 16px;
+    }
+    .seg-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .seg-rank {
+      width: 22px; height: 22px;
+      background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 600; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .seg-name  { font-size: 13.5px; font-weight: 600; color: var(--text); flex: 1; }
+    .seg-pct   { font-size: 18px; font-weight: 300; color: var(--accent); }
+    .seg-pct-bar-wrap { height: 4px; background: var(--border); margin: 2px 0 8px; }
+    .seg-pct-bar { height: 100%; }
+    .seg-tags  { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 7px; }
+    .seg-tag   { font-size: 10px; padding: 2px 7px; font-weight: 600; border: 1px solid; }
+    .seg-tag-ls  { background: var(--accent2); color: var(--accent); border-color: #c0d8ff; }
+    .seg-tag-cls { background: #fff8e1; color: #a06000; border-color: #f5d88a; }
+    .seg-tag-hh  { background: #defbe6; color: #0a5f26; border-color: #a7f0ba; }
+    .seg-demo  { font-size: 11px; color: var(--muted); margin-bottom: 9px; }
+    .seg-habitus { border-top: 1px solid var(--border); padding-top: 9px; }
+    .seg-h-row { display: flex; gap: 6px; align-items: flex-start; margin: 4px 0; font-size: 11.5px; }
+    .seg-h-key { color: var(--muted); font-weight: 600; min-width: 68px; font-size: 10.5px; flex-shrink: 0; }
+    .seg-h-val { color: var(--text); line-height: 1.4; }
+    .seg-frame-box {
+      background: var(--accent2); border-left: 3px solid var(--accent);
+      padding: 6px 10px; margin: 7px 0;
+      font-size: 12px; font-weight: 600;
+    }
+    .seg-phrase {
+      background: #fff8e1; border: 1px solid #f5d88a;
+      padding: 6px 10px;
+      font-size: 12px; font-style: italic; color: #7a6000; margin: 5px 0;
+    }
+    .seg-kw {
+      display: inline-block; font-size: 10px; padding: 2px 7px;
+      background: var(--accent2); color: var(--accent); font-weight: 600; margin: 2px 2px 0 0;
+      border: 1px solid #c0d8ff;
+    }
+    .seg-anti  { color: var(--ppp); }
+    .seg-ch    {
+      display: inline-block; font-size: 10px; padding: 2px 7px;
+      background: #defbe6; color: #0a5f26; font-weight: 600;
+      border: 1px solid #a7f0ba; margin: 2px 2px 0 0;
+    }
+
+    /* ── 구도 시뮬레이터 ─────────────────────────────────── */
+    .scen-lineage-label {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      margin-bottom: 5px; letter-spacing: 0.32px; text-transform: uppercase;
+    }
+    .scen-party-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .scen-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; cursor: pointer;
+      font-size: 12px; border: 1px solid var(--border);
+      background: var(--card); color: var(--text); transition: all 0.1s;
+      user-select: none; font-family: inherit;
+    }
+    .scen-chip:hover { border-color: var(--muted); background: var(--bg); }
+    .scen-chip.on { color: #fff; border-color: transparent; }
+    .scen-chip.dem.on  { background: var(--dem); }
+    .scen-chip.ppp.on  { background: var(--ppp); }
+    .scen-chip.prog.on { background: #e07000; }
+    .scen-chip.third.on{ background: #6e32c9; }
+    .scen-inh { font-size: 10px; opacity: 0.72; }
+
+    /* 스타 인물 출격 */
+    #starBonusSection {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 8px 12px; margin-bottom: 10px;
+    }
+    .star-section-hdr {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      margin-bottom: 7px; display: flex; align-items: center; gap: 5px;
+      text-transform: uppercase; letter-spacing: 0.32px;
+    }
+    .star-bonus-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+    }
+    .star-bonus-name {
+      font-size: 11.5px; font-weight: 600; width: 80px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .star-bonus-slider {
+      flex: 1; max-width: 160px; accent-color: var(--accent); cursor: pointer;
+    }
+    .star-bonus-val {
+      font-size: 11px; font-weight: 600; min-width: 44px;
+      color: var(--accent); text-align: right;
+    }
+    .star-mark { font-size: 10px; color: var(--warning); margin-left: 2px; }
+    .scen-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .scen-bar-label { width: 90px; font-size: 12px; text-align: right;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .scen-bar-track { flex: 1; height: 18px; background: var(--border); overflow: hidden; }
+    .scen-bar-fill { height: 100%; transition: width 0.3s; }
+    .scen-bar-pct { width: 40px; font-size: 12px; font-weight: 600; }
+    .scen-winner { font-size: 11px; font-weight: 600; padding: 8px 12px;
+      background: #fff8e1; border-left: 3px solid var(--warning);
+      border: 1px solid #f5d88a; color: var(--text); }
+
+    /* ── 인구통계 그리드 ─────────────────────────────────── */
+    .demo-section-label {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      letter-spacing: 0.32px; margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border); text-transform: uppercase;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 860px) { .demo-grid { grid-template-columns: 1fr 1fr; } }
+    .demo-chart-box {
+      background: var(--bg); border: 1px solid var(--border);
+      padding: 10px 12px; height: 175px; overflow: hidden;
+    }
+    .demo-chart-title {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      margin-bottom: 6px; letter-spacing: 0.32px; text-transform: uppercase;
+    }
+    .demo-chart-canvas { width: 100% !important; height: 130px !important; }
+
+    .seg-donut-wrap { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+    .seg-donut-chart { width: 200px; height: 200px; flex-shrink: 0; position: relative; }
+    .seg-donut-legend { flex: 1; min-width: 160px; }
+    .seg-legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 12px; }
+    .seg-legend-dot { width: 10px; height: 10px; flex-shrink: 0; }
+    .seg-load-btn {
+      width: 100%; padding: 12px; font-size: 14px;
+      background: var(--card); color: var(--accent);
+      border: 1px dashed var(--accent);
+      font-weight: 400; cursor: pointer; margin-bottom: 14px; font-family: inherit;
+    }
+    .seg-load-btn:hover { background: var(--accent2); }
+    .seg-load-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* 구/군 선택 칩 (복합 선거구) */
+    .district-chip-wrap {
+      background: var(--card); border: 1px solid var(--border);
+      padding: 10px 14px; margin-bottom: 12px;
+    }
+    .district-chip-hdr {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.32px;
+    }
+    .district-chip {
+      display: inline-flex; align-items: center; padding: 4px 12px;
+      font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--muted); cursor: pointer; transition: all 0.1s; font-family: inherit;
+    }
+    .district-chip.on {
+      background: var(--accent2); color: var(--accent);
+      border-color: var(--accent);
+    }
+    .district-chip:hover { border-color: var(--accent); }
+    .district-chip-apply {
+      font-size: 11px; padding: 4px 14px; margin-top: 8px;
+    }
+  </style>
+  <script src="static-shim.js"></script>
+</head>
+<body>
+
+<!-- ── 계파 설정 모달 ────────────────────────────────────────── -->
+<div class="modal-overlay" id="lineageModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>◈ 계파 설정 — 정당-계보 매핑 관리</h3>
+      <button class="close-btn" onclick="closeLineageModal()">✕</button>
+    </div>
+    <div class="modal-body" id="lineageModalBody">
+      <div class="loading">불러오는 중...</div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:8px;align-items:center">
+      <button onclick="dbResetLineage()"
+        style="background:#da1e28;color:#fff;border:none;padding:7px 14px;cursor:pointer;font-size:12px;font-family:inherit;letter-spacing:0.16px"
+        title="party_lineage 테이블만 디폴트 스냅샷으로 복원">↺ 계파 초기화</button>
+      <button onclick="dbSaveDefault()"
+        style="background:#24a148;color:#fff;border:none;padding:7px 14px;cursor:pointer;font-size:12px;font-family:inherit;letter-spacing:0.16px"
+        title="현재 DB 전체를 디폴트 스냅샷으로 저장">▣ 디폴트 저장</button>
+      <span style="flex:1"></span>
+      <button class="sec" onclick="closeLineageModal()">닫기</button>
+      <button onclick="saveLineageSettings()">▣ 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 동기화 모달 ──────────────────────────────────────────── -->
+<div class="modal-overlay" id="syncModal">
+  <div class="modal" style="width:720px">
+    <div class="modal-header">
+      <h3>↺ 데이터 동기화</h3>
+      <button class="close-btn" onclick="closeSyncModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- 신선도 요약 -->
+      <div id="syncFreshnessInfo" style="margin-bottom:14px;padding:10px 14px;background:var(--accent2);border-left:3px solid var(--accent);font-size:13px;"></div>
+      <!-- 선거 상태 테이블 -->
+      <div style="font-weight:600;font-size:12.5px;color:var(--muted);margin-bottom:4px">▤ 선거 수집 현황</div>
+      <div id="syncElectionTable"><div class="loading">불러오는 중...</div></div>
+      <!-- API 키 입력 폼 -->
+      <div id="syncApiKeySection" style="margin-top:12px;padding:10px 14px;background:#fff8e1;border-left:3px solid #f1c21b;border-radius:4px">
+        <div style="font-weight:600;font-size:12.5px;color:#8a6000;margin-bottom:6px">◆ 중앙선거관리위원회 API 키</div>
+        <!-- 키 없을 때 -->
+        <div id="apiKeyInputArea">
+          <div style="font-size:12px;color:#8a6000;margin-bottom:6px">
+            선거 데이터 동기화를 위해 NEC Open API 키가 필요합니다.<br>
+            <a href="https://open.nec.go.kr" target="_blank" style="color:#0055a5">open.nec.go.kr</a>에서 발급받을 수 있습니다.
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="apiKeyInput" type="password" placeholder="API 키 입력"
+              style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:monospace">
+            <button onclick="saveApiKey()" style="padding:6px 12px;font-size:12px;white-space:nowrap">저장</button>
+          </div>
+          <div id="apiKeyInputMsg" style="font-size:11px;margin-top:4px;color:#c00;display:none"></div>
+        </div>
+        <!-- 키 있을 때 -->
+        <div id="apiKeySetArea" style="display:none;font-size:12px;color:#2d6a2d">
+          <span>◉ API 키 설정됨: <code id="apiKeyMasked" style="background:#f0f0f0;padding:1px 6px;border-radius:3px"></code></span>
+          <button onclick="deleteApiKey()" style="margin-left:10px;padding:3px 8px;font-size:11px;background:#fff;border:1px solid #c00;color:#c00;border-radius:3px;cursor:pointer">삭제</button>
+        </div>
+      </div>
+      <!-- 진행 로그 -->
+      <div id="syncLogWrap" style="display:none">
+        <div style="font-weight:600;font-size:12.5px;color:var(--muted);margin:12px 0 4px">실행 로그</div>
+        <div class="sync-log" id="syncLog"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+      <span id="syncStatusMsg" style="font-size:12px;color:var(--muted);flex:1"></span>
+      <button class="sec" onclick="exportDbCsv()" title="yeojo.db 전체 테이블 ZIP 다운로드">▦ DB 전체 CSV</button>
+      <button class="sec" onclick="closeSyncModal()">닫기</button>
+      <button id="syncBtn" onclick="runSyncElections()" disabled>↺ 누락 선거 동기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 스냅샷 내보내기 모달 ─────────────────────────────────── -->
+<div class="modal-overlay" id="snapshotModal">
+  <div class="modal" style="width:660px">
+    <div class="modal-header">
+      <h3>◈ 스냅샷 내보내기 — GitHub Pages</h3>
+      <button class="close-btn" onclick="closeSnapshotModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">출력 폴더 경로</label>
+        <input id="snapOutPath" type="text" placeholder="C:\Users\...\yeojo-pages"
+          style="width:100%;padding:7px 10px;border:1px solid var(--border);font-size:13px;font-family:monospace;outline:none">
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">GitHub Pages 레포를 클론한 로컬 폴더 경로</div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">접속 비밀번호 (staticrypt 암호화)</label>
+        <input id="snapPassword" type="text" placeholder="14자 이상 권장 — 비워두면 암호화 생략"
+          style="width:100%;padding:7px 10px;border:1px solid var(--border);font-size:13px;font-family:monospace;outline:none">
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">설정 시 방문자가 비밀번호를 입력해야 접근 가능</div>
+      </div>
+      <div style="display:flex;gap:20px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="snapPersonas"> 페르소나 포함 <span style="color:var(--muted);font-size:11px">(5~15분 추가)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="snapDemographics"> 인구통계 포함
+        </label>
+      </div>
+      <div style="background:#f4f4f4;padding:10px 14px;font-size:12px;color:var(--muted);border-left:3px solid var(--border);line-height:1.8">
+        <b>필요 조건</b>: Node.js + <code style="background:#e0e0e0;padding:1px 5px">npm install -g staticrypt</code><br>
+        <b>완료 후</b>: 출력 폴더에서 <code style="background:#e0e0e0;padding:1px 5px">git add . &amp;&amp; git commit -m "스냅샷" &amp;&amp; git push</code>
+      </div>
+      <div id="snapLogWrap" style="display:none;margin-top:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-weight:600;font-size:12.5px;color:var(--muted)">진행 로그</span>
+          <span id="snapProgress" style="font-size:11.5px;color:var(--accent);font-weight:600;font-family:monospace"></span>
+        </div>
+        <div class="sync-log" id="snapLog" style="height:220px;white-space:pre;font-family:monospace;font-size:11.5px"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+      <span id="snapStatusMsg" style="font-size:12px;flex:1"></span>
+      <button class="sec" onclick="closeSnapshotModal()">닫기</button>
+      <button id="snapRunBtn" onclick="runExportStatic()">◈ 내보내기 실행</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 헤더 ─────────────────────────────────────────────────── -->
+<header>
+  <h1>◎ 여조안테나</h1>
+  <span>역대 선거결과(Baseline) + 여론조사 보정 → 지역구 의석 추론 분석 도구</span>
+  <div class="header-right">
+    <button id="freshnessBadge" class="freshness-badge" onclick="openSyncModal()" title="데이터 동기화">
+      ● 확인 중...
+    </button>
+    <button class="sec" onclick="openSnapshotModal()" title="GitHub Pages 정적 스냅샷 내보내기">◈ 스냅샷</button>
+    <button class="sec" onclick="openLineageModal()">◈ 계파 설정</button>
+    <button onclick="dbResetAll()"
+      style="background:#da1e28;color:#fff;border:none;padding:7px 14px;cursor:pointer;font-size:12px;font-family:inherit;letter-spacing:0.16px"
+      title="DB 전체를 디폴트 스냅샷으로 복원 (polls·elections·lineage 모두)">▲ 전체 초기화</button>
+  </div>
+</header>
+
+<!-- ── 컨트롤 바 ──────────────────────────────────────────────── -->
+<div class="controls">
+  <span class="ctrl-label">지역구</span>
+  <select id="sidoSel" onchange="loadRegions()">
+    <option value="">시도 선택</option>
+  </select>
+  <select id="regionSel" onchange="loadAll()">
+    <option value="">선거구 선택</option>
+  </select>
+  <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
+    <button id="battleBtn" class="sec" onclick="toggleBattleSection()" title="격전지 대시보드 열기/닫기">◫ 격전지</button>
+    <button class="sec" onclick="downloadSummaryCSV()">▽ 요약 CSV</button>
+    <button class="sec" onclick="downloadDetailCSV()">▽ 상세 CSV</button>
+    <button class="sec" onclick="downloadPollsCSV()">▽ 여조 DB CSV</button>
+    <button class="sec" onclick="togglePdfDrop()">▤ PDF 투입</button>
+  </div>
+</div>
+
+<!-- ── PDF 드롭존 ────────────────────────────────────────────── -->
+<div class="pdf-drop" id="pdfDrop"
+  ondragover="event.preventDefault(); this.classList.add('drag-over')"
+  ondragleave="this.classList.remove('drag-over')"
+  ondrop="handleDrop(event)">
+  <label>
+    <input type="file" id="pdfInput" accept=".pdf" multiple onchange="uploadPdfs(this.files)">
+    ▤ 중앙선관위 주차별 PDF를 드래그하거나 클릭해서 업로드<br>
+    <small>여러 파일 동시 업로드 가능 — 자동 파싱 후 DB에 추가됩니다</small><br>
+    <small style="color:var(--accent); font-weight:600">
+      ※ 최소 6주치(6개) PDF 투입 시 기본 정확도 확보 &nbsp;|&nbsp; PDF 없이도 Baseline 분석 가능
+    </small>
+  </label>
+  <div class="pdf-result" id="pdfResult"></div>
+</div>
+
+<!-- ── 메인 ───────────────────────────────────────────────────── -->
+<div class="main">
+  <div id="initMsg" style="text-align:center;color:var(--muted);font-size:13px;padding:8px 0">
+    ◇ 시도·선거구 선택 시 상세 분석 화면으로 전환
+  </div>
+
+  <!-- 격전지 대시보드 (지역 미선택 시) -->
+  <div id="battleSection" style="margin-bottom:18px">
+    <div class="chart-card full">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px">
+        <h3 style="margin:0">◫ 전국 격전지 대시보드</h3>
+        <div id="battleSwingNote" style="font-size:11px;color:var(--muted)"></div>
+        <button class="sec" onclick="downloadBattleCSV()" style="font-size:11px;padding:3px 10px;margin-left:auto">▽ 격전지 전체 CSV</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px">
+        <label>시도:
+          <select id="battleSidoFilter" onchange="renderBattleTable()" style="padding:3px 6px;font-size:12px">
+            <option value="">전체</option>
+          </select>
+        </label>
+        <label>격차 ≤
+          <input id="battleGapFilter" type="number" value="10" step="0.5" style="width:55px;padding:3px 6px;font-size:12px" onchange="renderBattleTable()">%p
+        </label>
+        <label>탄성계수 ≥
+          <input id="battleElastFilter" type="number" value="0" step="0.1" style="width:55px;padding:3px 6px;font-size:12px" onchange="renderBattleTable()">
+        </label>
+        <label>정렬:
+          <select id="battleSortFilter" onchange="renderBattleTable()" style="padding:3px 6px;font-size:12px">
+            <option value="battle_score">격전점수 ↓</option>
+            <option value="abs_gap">격차 절댓값 ↑</option>
+            <option value="elasticity">탄성계수 ↓</option>
+            <option value="gap_dem">민주 우세순</option>
+            <option value="gap_ppp">보수 우세순</option>
+          </select>
+        </label>
+        <span id="battleCount" style="margin-left:auto;font-size:11px;color:var(--muted)"></span>
+      </div>
+      <!-- ── What-if 슬라이더 ── -->
+      <div id="whatifPanel" style="background:var(--accent2);border:1px solid #c0d8ff;border-left:3px solid var(--accent);padding:10px 16px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <span style="font-weight:700;font-size:12px">⊙ What-if 시뮬레이션</span>
+          <span style="font-size:11px;color:var(--muted)">— 전국 여론 변화 시 지역구 추정치 실시간 재계산</span>
+          <button class="sec" onclick="resetWhatif()" style="margin-left:auto;padding:3px 10px;font-size:11px">초기화</button>
+        </div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="color:#0055a5;font-weight:700;min-width:52px">민주계</span>
+            <input id="sliderDem" type="range" min="-10" max="10" step="0.5" value="0"
+              oninput="onWhatif()" style="width:160px;accent-color:#0055a5">
+            <span id="sliderDemVal" style="min-width:48px;font-weight:700;color:#0055a5">±0.0%p</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="color:#c8000a;font-weight:700;min-width:52px">보수계</span>
+            <input id="sliderPpp" type="range" min="-10" max="10" step="0.5" value="0"
+              oninput="onWhatif()" style="width:160px;accent-color:#c8000a">
+            <span id="sliderPppVal" style="min-width:48px;font-weight:700;color:#c8000a">±0.0%p</span>
+          </label>
+          <div id="whatifSummary" style="font-size:12px;color:var(--muted);margin-left:auto"></div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;max-height:520px;overflow-y:auto">
+        <table id="battleTable" style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead style="position:sticky;top:0;background:var(--bg);z-index:1;border-bottom:2px solid var(--border)">
+            <tr>
+              <th style="text-align:left;padding:6px 8px">시도</th>
+              <th style="text-align:left;padding:6px 8px">선거구</th>
+              <th style="text-align:right;padding:6px 8px">22대 민주</th>
+              <th style="text-align:right;padding:6px 8px">22대 보수</th>
+              <th style="text-align:right;padding:6px 8px">민주 추정</th>
+              <th style="text-align:right;padding:6px 8px">보수 추정</th>
+              <th style="text-align:right;padding:6px 8px">격차</th>
+              <th style="text-align:right;padding:6px 8px">탄성</th>
+              <th style="text-align:right;padding:6px 8px">반전임계</th>
+              <th style="text-align:right;padding:6px 8px">격전점수</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">
+        ◇ 격전점수 = (10 - |격차|) × 탄성계수. 행 클릭 시 해당 지역구 분석 화면으로 이동.
+      </div>
+    </div>
+  </div>
+
+  <div id="appContent" style="display:none">
+
+    <div class="banner" id="banner"></div>
+
+    <!-- 계보 트레일 -->
+    <div class="lineage-trail" id="lineageTrail" style="display:none"></div>
+
+    <!-- 선거구 구성 행정동 -->
+    <div id="dongMapRow" style="display:none;margin-bottom:10px;padding:8px 14px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--subtle)">
+      <span style="font-size:11px;font-weight:700;color:var(--muted);margin-right:8px">◆ 구성 행정동</span>
+      <span id="dongMapList" style="font-size:11.5px;color:var(--text);line-height:1.7"></span>
+      <a id="dongMapWikiLink" href="#" target="_blank" style="font-size:10px;color:var(--accent);margin-left:8px;text-decoration:none;display:none">위키 ↗</a>
+    </div>
+
+    <!-- ══ BASELINE ══════════════════════════════════════════ -->
+    <div class="section-label">
+      <h2>▦ BASELINE — 역대 선거결과 분석</h2>
+      <span class="badge badge-baseline">PDF 불필요</span>
+      <span class="section-note">22대 선거구 기준 | 선거 DB 데이터</span>
+    </div>
+
+    <!-- 메트릭 카드 -->
+    <div class="metrics" id="metrics"></div>
+
+    <!-- 바로미터 개요 (raw gap, 선거별 민주-보수 격차) -->
+    <div class="chart-card full" style="margin-bottom:14px">
+      <h3>◎ 바로미터 — 선거별 민주·보수 득표 격차</h3>
+      <div class="chart-wrap" style="height:160px">
+        <canvas id="barometerChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 스윙보터 신호 분석 카드 -->
+    <div class="chart-card full" id="swingCard" style="margin-bottom:14px;display:none">
+      <h3>◉ 스윙보터 신호 분석 — 기타 득표율 추이 &amp; 투표율 민감도</h3>
+      <div id="swingAnalysis"></div>
+    </div>
+
+    <!-- 역대 선거 결과 카드 (상시 표시) + 선거인수 카드 -->
+    <div class="chart-grid" style="margin-bottom:14px">
+      <div class="chart-card" style="grid-column: 1 / 2">
+        <div class="chart-header-row">
+          <h3>▣ 역대 선거 결과</h3>
+          <span id="redistrictingBadge" style="display:none"></span>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">국회의원 총선</div>
+        <div class="chart-wrap" style="height:160px;margin-bottom:14px">
+          <canvas id="historyChart"></canvas>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">광역단체장 (시도지사·시장)</div>
+        <div class="chart-wrap" style="height:140px;margin-bottom:14px">
+          <canvas id="metroChart"></canvas>
+        </div>
+        <div id="metroNoData" style="display:none;font-size:11px;color:var(--muted);padding:8px 0;margin-bottom:10px">광역단체장 데이터 없음</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">대통령 선거 (시도별)</div>
+        <div class="chart-wrap" style="height:140px">
+          <canvas id="presChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card" style="grid-column: 2 / 3; display:flex; flex-direction:column">
+        <h3>◫ 선거인수 &amp; 투표율 추이</h3>
+        <div class="chart-wrap" style="flex:1; min-height:200px">
+          <canvas id="votersChart"></canvas>
+        </div>
+        <div id="votersTblWrap" style="margin-top:12px;overflow-x:auto;max-height:260px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- 바닥선 + 선거결과 테이블 -->
+    <div class="chart-grid" style="margin-bottom:14px">
+      <div class="chart-card">
+        <h3>▽ 역대 바닥선 — 계보별 최저 득표율</h3>
+        <div id="floorRange"></div>
+      </div>
+      <div class="chart-card">
+        <h3>▤ 역대 선거결과 상세</h3>
+        <div class="tab-bar" id="tableTabBar">
+          <button class="tab active" onclick="switchTableTab('summary')">요약</button>
+          <button class="tab" onclick="switchTableTab('detail')">후보별</button>
+        </div>
+        <div id="historyTableSummary" style="max-height:230px; overflow-y:auto"></div>
+        <div id="historyTableDetail"  style="max-height:230px; overflow-y:auto; display:none"></div>
+        <div style="margin-top:8px; text-align:right">
+          <button class="sec" onclick="downloadSummaryCSV()" style="font-size:11px;padding:4px 10px">요약 CSV</button>
+          <button class="sec" onclick="downloadDetailCSV()"  style="font-size:11px;padding:4px 10px;margin-left:4px">상세 CSV</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══ 구도 시뮬레이터 ══════════════════════════════════════ -->
+    <div class="chart-card" id="scenarioCard" style="display:none;margin-bottom:14px">
+      <div class="chart-header-row">
+        <h3>◉ 구도 시뮬레이터</h3>
+        <span style="font-size:11px;color:var(--muted)">출마 정당 선택 → 득표 분포 추정</span>
+      </div>
+      <div id="scenarioPartyGrid" style="margin:10px 0 6px"></div>
+      <!-- 스타 인물 출격 보너스 -->
+      <div id="starBonusSection" style="display:none"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button class="pri" onclick="runScenario()" style="padding:6px 18px">▦ 계산</button>
+        <span id="scenCalibNote" style="font-size:11px;color:var(--muted)">inheritance 비율 분배 · 스타 보너스 후 재정규화</span>
+      </div>
+      <div id="scenarioResult" style="display:none">
+        <div id="scenarioWinner" style="margin-bottom:10px"></div>
+        <div id="scenarioBars"></div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:10px">
+          ※ 전략적 투표·부동층 이동 미반영 — 스타 보너스는 전체 재정규화(100%p 유지)
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 유권자 구조 분석 (Nemotron 페르소나) ════════════════ -->
+    <div class="section-label" style="margin-top:26px">
+      <h2>◈ 유권자 구조 분석</h2>
+      <span class="badge badge-optional">Nemotron 페르소나</span>
+      <span class="section-note">초기 로딩 최대 60초 · 이후 즉시</span>
+    </div>
+
+    <!-- 분석 시작 버튼 (로딩 전) -->
+    <div id="segLoadArea" style="display:none">
+      <button id="segLoadBtn" class="seg-load-btn" onclick="loadVoterSegments()">
+        ◈ 유권자 구조 분석 시작
+      </button>
+      <div id="segLoadMsg" style="font-size:11px;color:var(--muted);text-align:center;margin-top:-10px;margin-bottom:10px"></div>
+    </div>
+
+    <!-- 분석 결과 섹션 -->
+    <div id="segmentSection" style="display:none">
+      <div class="chart-card full" style="margin-bottom:14px">
+        <!-- 헤더 -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div id="segProvince" style="font-size:12.5px;font-weight:700;color:var(--text)"></div>
+            <div id="segTotal" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+          </div>
+          <button class="sec" onclick="exportSegmentsCSV()" style="font-size:11px;padding:4px 12px">
+            ▽ 세그먼트 요약 CSV
+          </button>
+        </div>
+        <!-- 구/군 선택 (복합 선거구) -->
+        <div id="districtSelector" style="display:none" class="district-chip-wrap">
+          <div class="district-chip-hdr">◫ 구/군 선택 — 복합 선거구 (성향이 다른 구/군을 개별 분석)</div>
+          <div id="districtChips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <div style="margin-top:8px">
+            <button class="sec district-chip-apply" onclick="applyDistrictFilter()">✔ 선택 적용</button>
+            <button class="sec district-chip-apply" onclick="selectAllDistricts()" style="margin-left:6px">전체 선택</button>
+          </div>
+        </div>
+
+        <!-- 인구통계 분포 -->
+        <div id="demoSection" style="display:none;margin-bottom:18px">
+          <div class="demo-section-label">▦ 인구통계 분포 — Nemotron 페르소나 기반</div>
+          <div class="demo-grid">
+            <div class="demo-chart-box"><div class="demo-chart-title">생애단계</div><canvas id="demoLifeStage" class="demo-chart-canvas" height="130"></canvas></div>
+            <div class="demo-chart-box"><div class="demo-chart-title">성별</div><canvas id="demoSex" class="demo-chart-canvas" height="130"></canvas></div>
+            <div class="demo-chart-box"><div class="demo-chart-title">계층포지션</div><canvas id="demoClass" class="demo-chart-canvas" height="130"></canvas></div>
+            <div class="demo-chart-box"><div class="demo-chart-title">학력</div><canvas id="demoEdu" class="demo-chart-canvas" height="130"></canvas></div>
+            <div class="demo-chart-box"><div class="demo-chart-title">직업군</div><canvas id="demoOcc" class="demo-chart-canvas" height="130"></canvas></div>
+            <div class="demo-chart-box"><div class="demo-chart-title">가구형태</div><canvas id="demoHousehold" class="demo-chart-canvas" height="130"></canvas></div>
+          </div>
+        </div>
+
+        <!-- 도넛 + 범례 -->
+        <div class="seg-donut-wrap">
+          <div class="seg-donut-chart">
+            <canvas id="segDonutChart"></canvas>
+          </div>
+          <div class="seg-donut-legend" id="segDonutLegend"></div>
+        </div>
+        <!-- 세그먼트 카드 그리드 -->
+        <div class="seg-grid" id="segGrid"></div>
+      </div>
+    </div>
+
+  </div><!-- /appContent -->
+
+  <!-- ══ 여론조사 보정 (PDF 업로드 시 독립 표시) ════════════════ -->
+  <div id="pollSection" style="display:none">
+    <div class="section-label">
+      <h2>📡 여론조사 보정 추정</h2>
+      <span class="badge badge-optional">PDF 투입 시 정확도 향상</span>
+      <span class="section-note" id="pollCountNote"></span>
+    </div>
+
+    <!-- 여론조사 시계열 차트 -->
+    <div class="chart-card full" style="margin-bottom:14px">
+      <h3>전국 정당지지율 추이 — house effect 보정 + 풀링 신뢰구간 + ±8%p 개인기 범위</h3>
+      <div class="chart-wrap" style="height:300px">
+        <canvas id="pollChart"></canvas>
+      </div>
+    </div>
+
+    <!-- House effect + 계보 내 점유율 -->
+    <div class="chart-grid" style="margin-bottom:28px">
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3>▣ 기관별 house effect (민주계 기준, 표본 상위 기관)</h3>
+          <button class="sec" onclick="downloadHouseEffectCSV()" style="font-size:11px;padding:3px 10px">▽ 편향 CSV</button>
+        </div>
+        <div class="chart-wrap" style="height:260px">
+          <canvas id="houseChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>◈ 최근 6주 내 점유율</h3>
+        <div id="intraBar"></div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="intraChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div><!-- /pollSection -->
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8766';
+let charts = {};
+let _summaryData = [], _detailData = [];
+let _lineageConfig = []; // 계파 설정 캐시
+let _localHistData = [];
+let _allParties = [];      // 전체 party_lineage 캐시 (시뮬레이터용)
+let _scenarioEstimate = null;
+let _scenarioParties = [];
+
+// ── 초기화 ────────────────────────────────────────────────────
+const safe = p => p.catch(() => null);
+
+async function init() {
+  const sidos = await fetch(`${API}/sido-list`).then(r => r.json()).catch(() => []);
+  const sel = document.getElementById('sidoSel');
+  sidos.forEach(s => sel.appendChild(new Option(s, s)));
+  renderLineageTrail();
+  const [smoothed, houseEffects] = await Promise.all([
+    safe(fetch(`${API}/polls/smoothed`).then(r => r.json())),
+    safe(fetch(`${API}/house-effects`).then(r => r.json())),
+  ]);
+  renderPollSection(smoothed || [], houseEffects || []);
+  loadBattlegrounds();
+  checkFreshness(); // 신선도 배지 초기화
+}
+
+// ── 신선도 배지 ───────────────────────────────────────────────
+async function checkFreshness() {
+  const badge = document.getElementById('freshnessBadge');
+  // 서버 시작 직후 접속 시 아직 준비 안 됐을 수 있으므로 최대 5회 재시도
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const d = await fetch(`${API}/polls/freshness`).then(r => r.json());
+      if (!d.last_poll_date) {
+        badge.textContent = '● 여조 데이터 없음';
+        badge.className = 'freshness-badge stale';
+        return;
+      }
+      const w = d.missing_weeks;
+      if (w === 0) {
+        badge.textContent = `● 여조 최신 (${d.last_poll_date})`;
+        badge.className = 'freshness-badge fresh';
+      } else if (w <= 2) {
+        badge.textContent = `▲ 여조 ${w}주 누락`;
+        badge.className = 'freshness-badge warn';
+      } else {
+        badge.textContent = `▲ 여조 ${w}주 누락`;
+        badge.className = 'freshness-badge stale';
+      }
+      return; // 성공 시 종료
+    } catch {
+      if (attempt < 4) {
+        await new Promise(r => setTimeout(r, 1500)); // 1.5초 대기 후 재시도
+      }
+    }
+  }
+  badge.textContent = '● 서버 연결 오류';
+  badge.className = 'freshness-badge stale';
+}
+
+// ── 동기화 모달 ───────────────────────────────────────────────
+let _syncStatus = null;
+
+async function openSyncModal() {
+  document.getElementById('syncModal').classList.add('open');
+  document.getElementById('syncLogWrap').style.display = 'none';
+  document.getElementById('syncStatusMsg').textContent = '';
+  await loadSyncStatus();
+}
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('open');
+}
+
+async function loadSyncStatus() {
+  document.getElementById('syncElectionTable').innerHTML = '<div class="loading">불러오는 중...</div>';
+  try {
+    const [fresh, status] = await Promise.all([
+      fetch(`${API}/polls/freshness`).then(r => r.json()),
+      fetch(`${API}/admin/election-status`).then(r => r.json()),
+    ]);
+    _syncStatus = status;
+
+    // 신선도 요약
+    const fi = document.getElementById('syncFreshnessInfo');
+    if (fresh.last_poll_date) {
+      const warnColor = fresh.missing_weeks === 0 ? '#1a7a30' : fresh.missing_weeks <= 2 ? '#8a6000' : '#b71c1c';
+      fi.innerHTML = `<span style="color:${warnColor};font-weight:700">
+        ${fresh.missing_weeks === 0 ? '◉ 여론조사 최신' : `▲ 여론조사 ${fresh.missing_weeks}주 누락`}
+      </span>
+      &nbsp;· 최근 실제 데이터: <b>${fresh.last_poll_date}</b> (${fresh.days_since}일 전)`;
+    } else {
+      fi.innerHTML = '<span style="color:#b71c1c;font-weight:700">▲ 여론조사 데이터 없음</span>';
+    }
+
+    // 선거 현황 테이블
+    const rows = status.elections || [];
+    const missingCount = (status.missing || []).length;
+    let html = `<table class="sync-table">
+      <tr><th>선거유형</th><th>회차</th><th>선거일</th><th>상태</th><th>행수</th></tr>`;
+    rows.forEach(r => {
+      const dt = r.sgId ? `${r.sgId.slice(0,4)}-${r.sgId.slice(4,6)}-${r.sgId.slice(6,8)}` : '-';
+      const badge = r.in_db
+        ? `<span class="sync-badge-ok">수집완료</span>`
+        : `<span class="sync-badge-miss">미수집</span>`;
+      html += `<tr><td>${r.type}</td><td>${r.seq}대/회</td><td>${dt}</td><td>${badge}</td><td>${r.rows || 0}</td></tr>`;
+    });
+    html += '</table>';
+    if (missingCount > 0) html += `<div style="margin-top:8px;font-size:12px;color:var(--muted)">미수집 선거 ${missingCount}건 — 동기화 버튼으로 수집 가능합니다.</div>`;
+    else html += `<div style="margin-top:8px;font-size:12px;color:#1a7a30">모든 선거 수집 완료</div>`;
+    document.getElementById('syncElectionTable').innerHTML = html;
+
+    // API 키 상태 업데이트
+    await _refreshApiKeyUI();
+
+    // 버튼 활성화: 누락 있고 API 키 있을 때만
+    const btn = document.getElementById('syncBtn');
+    btn.disabled = !(missingCount > 0 && status.has_api_key);
+    if (missingCount === 0) btn.textContent = '◉ 이미 최신 상태';
+    else if (!status.has_api_key) btn.textContent = '◆ API 키 필요';
+    else btn.textContent = `↺ 누락 ${missingCount}건 동기화`;
+
+  } catch (e) {
+    document.getElementById('syncElectionTable').innerHTML =
+      `<div style="color:#b71c1c;padding:10px">서버 오류: ${e.message}</div>`;
+  }
+}
+
+async function runSyncElections() {
+  const btn = document.getElementById('syncBtn');
+  const msg = document.getElementById('syncStatusMsg');
+  const logWrap = document.getElementById('syncLogWrap');
+  const logEl = document.getElementById('syncLog');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 동기화 중...';
+  msg.textContent = '중선위 API에서 데이터를 수집하고 있습니다. 잠시 기다려주세요...';
+  logWrap.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/admin/sync-elections`, {method: 'POST'}).then(r => r.json());
+    logWrap.style.display = 'block';
+    if (res.error) {
+      logEl.textContent = `[오류] ${res.error}\n${res.detail || ''}`;
+      msg.textContent = '동기화 실패';
+    } else {
+      logEl.textContent = [res.collector, res.swing_model, res.swing_error].filter(Boolean).join('\n---\n');
+      msg.textContent = `◉ ${res.status} — 탄성계수 재계산 완료`;
+      await checkFreshness();
+      await loadSyncStatus();
+    }
+  } catch (e) {
+    msg.textContent = `오류: ${e.message}`;
+  }
+}
+
+// ── DB 전체 CSV 내보내기 ─────────────────────────────────────
+async function exportDbCsv() {
+  const btn = event.currentTarget;
+  const orig = btn.textContent;
+  btn.textContent = '⏳ 준비 중...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/admin/export-db-csv`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const cd   = res.headers.get('Content-Disposition') || '';
+    const name = (cd.match(/filename="(.+)"/) || [])[1] || 'yeojo_db.zip';
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert(`다운로드 실패: ${e.message}`);
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
+// ── API 키 관리 ──────────────────────────────────────────────
+async function _refreshApiKeyUI() {
+  try {
+    const s = await fetch(`${API}/admin/api-key-status`).then(r => r.json());
+    const inputArea = document.getElementById('apiKeyInputArea');
+    const setArea   = document.getElementById('apiKeySetArea');
+    if (s.set) {
+      document.getElementById('apiKeyMasked').textContent = s.masked;
+      inputArea.style.display = 'none';
+      setArea.style.display   = 'block';
+    } else {
+      inputArea.style.display = 'block';
+      setArea.style.display   = 'none';
+    }
+    return s.set;
+  } catch { return false; }
+}
+
+async function saveApiKey() {
+  const input = document.getElementById('apiKeyInput');
+  const msgEl = document.getElementById('apiKeyInputMsg');
+  const key   = input.value.trim();
+  if (!key) { msgEl.textContent = 'API 키를 입력하세요.'; msgEl.style.display='block'; return; }
+  msgEl.style.display = 'none';
+  try {
+    const res = await fetch(`${API}/admin/api-key`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({key}),
+    }).then(r => r.json());
+    if (res.error) { msgEl.textContent = res.error; msgEl.style.display='block'; return; }
+    input.value = '';
+    await _refreshApiKeyUI();
+    await loadSyncStatus();   // 버튼 상태 갱신
+  } catch (e) {
+    msgEl.textContent = `저장 실패: ${e.message}`;
+    msgEl.style.display = 'block';
+  }
+}
+
+async function deleteApiKey() {
+  if (!confirm('API 키를 삭제하시겠습니까?')) return;
+  try {
+    await fetch(`${API}/admin/api-key`, {method: 'DELETE'});
+    await _refreshApiKeyUI();
+    await loadSyncStatus();
+  } catch (e) {
+    alert(`삭제 실패: ${e.message}`);
+  }
+}
+
+// ── 격전지 대시보드 ───────────────────────────────────────────
+let _battleData = null;
+let _battlePinned = false;   // 사용자가 명시적으로 열었는지 여부
+let _houseEffects = [];      // 기관 편향 (CSV 출력용)
+
+function toggleBattleSection() {
+  _battlePinned = !_battlePinned;
+  const sec = document.getElementById('battleSection');
+  const btn = document.getElementById('battleBtn');
+  sec.style.display = _battlePinned ? '' : 'none';
+  btn.style.background   = _battlePinned ? 'var(--accent)' : '';
+  btn.style.color        = _battlePinned ? '#fff' : '';
+  btn.style.borderColor  = _battlePinned ? 'var(--accent)' : '';
+}
+
+async function loadBattlegrounds() {
+  const data = await safe(fetch(`${API}/battlegrounds`).then(r => r.json()));
+  if (!data) return;
+  _battleData = data;
+  document.getElementById('battleSwingNote').textContent =
+    `현재 전국 스윙: 민주 ${data.swing_dem >= 0 ? '+' : ''}${data.swing_dem}%p / 보수 ${data.swing_ppp >= 0 ? '+' : ''}${data.swing_ppp}%p (22대 대비)`;
+
+  // 시도 필터 옵션
+  const sidos = [...new Set(data.regions.map(r => r.sido).filter(Boolean))].sort();
+  const sidoSel = document.getElementById('battleSidoFilter');
+  sidos.forEach(s => sidoSel.appendChild(new Option(s, s)));
+
+  renderBattleTable();
+}
+
+function renderBattleTable() {
+  if (!_battleData) return;
+  const sido    = document.getElementById('battleSidoFilter').value;
+  const gapMax  = parseFloat(document.getElementById('battleGapFilter').value) || 999;
+  const elastMin= parseFloat(document.getElementById('battleElastFilter').value) || 0;
+  const sortKey = document.getElementById('battleSortFilter').value;
+
+  // What-if 슬라이더 값
+  const extraDem = parseFloat(document.getElementById('sliderDem').value) || 0;
+  const extraPpp = parseFloat(document.getElementById('sliderPpp').value) || 0;
+  const swingDem = _battleData.swing_dem + extraDem;
+  const swingPpp = _battleData.swing_ppp + extraPpp;
+  const hasWhatif = extraDem !== 0 || extraPpp !== 0;
+
+  // 시뮬레이션 적용
+  let rows = _battleData.regions
+    .filter(r => r.elasticity !== null)
+    .map(r => {
+      const el = r.elasticity || 1;
+      const dEst = r.dem_base != null ? +(r.dem_base + swingDem * el).toFixed(2) : null;
+      const pEst = r.ppp_base != null ? +(r.ppp_base + swingPpp * el).toFixed(2) : null;
+      const gap  = dEst != null && pEst != null ? +(dEst - pEst).toFixed(2) : null;
+      const bs   = gap != null ? +((10 - Math.min(Math.abs(gap), 10)) * el).toFixed(2) : null;
+      const origGap = r.gap;
+      const flipped = hasWhatif && origGap != null && gap != null &&
+                      Math.sign(origGap) !== 0 && Math.sign(gap) !== 0 &&
+                      Math.sign(origGap) !== Math.sign(gap);
+      return { ...r, dem_est: dEst, ppp_est: pEst, gap, battle_score: bs, flipped };
+    });
+
+  if (sido) rows = rows.filter(r => r.sido === sido);
+  rows = rows.filter(r => r.gap !== null && Math.abs(r.gap) <= gapMax && r.elasticity >= elastMin);
+
+  const sorters = {
+    battle_score: (a,b) => (b.battle_score||0) - (a.battle_score||0),
+    abs_gap:      (a,b) => Math.abs(a.gap) - Math.abs(b.gap),
+    elasticity:   (a,b) => b.elasticity - a.elasticity,
+    gap_dem:      (a,b) => b.gap - a.gap,
+    gap_ppp:      (a,b) => a.gap - b.gap,
+  };
+  rows.sort(sorters[sortKey]);
+
+  // What-if 요약
+  if (hasWhatif) {
+    const allRows = _battleData.regions.map(r => {
+      const el = r.elasticity || 1;
+      const dEst = r.dem_base != null ? r.dem_base + swingDem * el : null;
+      const pEst = r.ppp_base != null ? r.ppp_base + swingPpp * el : null;
+      const gap  = dEst != null && pEst != null ? dEst - pEst : null;
+      return { origGap: r.gap, gap };
+    }).filter(r => r.origGap != null && r.gap != null && Math.sign(r.origGap) !== 0);
+    const flipCount = allRows.filter(r => Math.sign(r.origGap) !== Math.sign(r.gap)).length;
+    const demFlip = allRows.filter(r => r.origGap < 0 && r.gap > 0).length;
+    const pppFlip = allRows.filter(r => r.origGap > 0 && r.gap < 0).length;
+    document.getElementById('whatifSummary').innerHTML =
+      `<span style="font-weight:700">⟳ ${flipCount}개 뒤집힘</span> `+
+      `<span style="color:#0055a5">(민주→+${demFlip})</span> `+
+      `<span style="color:#c8000a">(보수→+${pppFlip})</span>`;
+  } else {
+    document.getElementById('whatifSummary').textContent = '';
+  }
+
+  const fmtPct  = (v, suffix='%') => v == null ? '-' : (+v).toFixed(1) + suffix;
+  const fmtNum  = (v, dp=2)       => v == null ? '-' : (+v).toFixed(dp);
+  const tbody = document.querySelector('#battleTable tbody');
+  tbody.innerHTML = rows.slice(0, 200).map(r => {
+    const gapColor = r.gap > 0 ? 'color:#0055a5' : r.gap < 0 ? 'color:#c8000a' : '';
+    const battleColor = r.battle_score > 8 ? 'background:#fff5d4' : r.battle_score > 5 ? 'background:#fffbe9' : '';
+    const floorWarn = (r.below_floor_dem || r.below_floor_ppp) ? ' ⚠' : '';
+    const flipBadge = r.flipped ? `<span style="font-size:10px;background:${r.gap>0?'#edf5ff':'#fff1f1'};color:${r.gap>0?'#0055a5':'#c8000a'};padding:1px 5px;margin-left:4px;border:1px solid ${r.gap>0?'#c0d8ff':'#ffc2c2'}">${r.gap>0?'민주↑':'보수↑'}</span>` : '';
+    return `<tr style="cursor:pointer;border-top:1px solid #e8ebf2;${battleColor}${r.flipped?';outline:2px solid '+(r.gap>0?'#90b8e8':'#e89090')+';outline-offset:-2px':''}"
+                onclick="jumpToRegion('${r.sido}','${r.region_code}')">
+      <td style="padding:4px 8px">${r.sido || '-'}</td>
+      <td style="padding:4px 8px;font-weight:600">${r.region_name}${floorWarn}${flipBadge}</td>
+      <td style="padding:4px 8px;text-align:right">${fmtPct(r.dem_base)}</td>
+      <td style="padding:4px 8px;text-align:right">${fmtPct(r.ppp_base)}</td>
+      <td style="padding:4px 8px;text-align:right;color:#0055a5">${fmtPct(r.dem_est)}</td>
+      <td style="padding:4px 8px;text-align:right;color:#c8000a">${fmtPct(r.ppp_est)}</td>
+      <td style="padding:4px 8px;text-align:right;font-weight:700;${gapColor}">${r.gap > 0 ? '+' : ''}${fmtPct(r.gap, '%p')}</td>
+      <td style="padding:4px 8px;text-align:right">${fmtNum(r.elasticity, 2)}</td>
+      <td style="padding:4px 8px;text-align:right">${fmtPct(r.flip_threshold, '%p')}</td>
+      <td style="padding:4px 8px;text-align:right;font-weight:700">${fmtNum(r.battle_score, 1)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('battleCount').textContent =
+    `${rows.length}개 매칭 (상위 200 표시)`;
+}
+
+function onWhatif() {
+  const dem = parseFloat(document.getElementById('sliderDem').value);
+  const ppp = parseFloat(document.getElementById('sliderPpp').value);
+  document.getElementById('sliderDemVal').textContent = (dem >= 0 ? '+' : '') + dem.toFixed(1) + '%p';
+  document.getElementById('sliderPppVal').textContent = (ppp >= 0 ? '+' : '') + ppp.toFixed(1) + '%p';
+  renderBattleTable();
+}
+
+function resetWhatif() {
+  document.getElementById('sliderDem').value = 0;
+  document.getElementById('sliderPpp').value = 0;
+  document.getElementById('sliderDemVal').textContent = '±0.0%p';
+  document.getElementById('sliderPppVal').textContent = '±0.0%p';
+  renderBattleTable();
+}
+
+async function jumpToRegion(sido, regionCode) {
+  if (!sido || !regionCode) return;
+  const sidoSel = document.getElementById('sidoSel');
+  sidoSel.value = sido;
+  await loadRegions();
+  document.getElementById('regionSel').value = regionCode;
+  loadAll();
+  document.getElementById('appContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function loadRegions() {
+  const sido = document.getElementById('sidoSel').value;
+  const sel  = document.getElementById('regionSel');
+  sel.innerHTML = '<option value="">선거구 선택</option>';
+  if (!sido) return;
+  const regions = await fetch(`${API}/regions?sido=${encodeURIComponent(sido)}`).then(r => r.json());
+  regions.forEach(r => sel.appendChild(new Option(r.region_name, r.region_code)));
+}
+
+// ── 전체 로드 ─────────────────────────────────────────────────
+async function loadAll() {
+  const rc = document.getElementById('regionSel').value;
+  if (!rc) return;
+  document.getElementById('initMsg').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  if (!_battlePinned) document.getElementById('battleSection').style.display = 'none';
+  document.getElementById('metrics').innerHTML = '<div class="loading">분석 중...</div>';
+
+  // 유권자 구조 분석 초기화 (지역 바뀌면 리셋)
+  _segmentData = null;
+  _availableDistricts = [];
+  _selectedDistricts  = [];
+  document.getElementById('segmentSection').style.display = 'none';
+  document.getElementById('segLoadArea').style.display = '';
+  document.getElementById('districtSelector').style.display = 'none';
+  const lb = document.getElementById('segLoadBtn');
+  lb.disabled = false;
+  lb.textContent = '◈ 유권자 구조 분석 시작';
+  document.getElementById('segLoadMsg').textContent = '';
+
+  const [analysis, estimate, history, histLocal, voters, smoothed, houseEffects, detail, redistricting] = await Promise.all([
+    safe(fetch(`${API}/region/${encodeURIComponent(rc)}/analysis`).then(r => r.json())),
+    safe(fetch(`${API}/region/${encodeURIComponent(rc)}/estimate`).then(r => r.json())),
+    safe(fetch(`${API}/region/${encodeURIComponent(rc)}/lineage-history?include_local=false`).then(r => r.json())),
+    safe(fetch(`${API}/region/${encodeURIComponent(rc)}/lineage-history?include_local=true`).then(r => r.json())),
+    safe(fetch(`${API}/region/${encodeURIComponent(rc)}/voters-trend`).then(r => r.json())),
+    safe(fetch(`${API}/polls/smoothed`).then(r => r.json())),
+    safe(fetch(`${API}/house-effects`).then(r => r.json())),
+    safe(fetch(`${API}/region/${encodeURIComponent(rc)}/history`).then(r => r.json())),
+    safe(fetch(`${API}/region/${encodeURIComponent(rc)}/redistricting-info`).then(r => r.json())),
+  ]);
+
+  _summaryData  = histLocal || [];
+  _detailData   = detail || [];
+  _localHistData = histLocal || [];
+
+  renderMetrics(analysis || {}, estimate || {});
+  renderConfidence(analysis || {}, estimate || {}, smoothed || [], detail || []);
+  renderBanner(estimate || {});
+  // 트레일은 init()에서 이미 렌더링됨 (skip)
+
+  renderHistoryChart(history || [], redistricting || {});
+  renderMetroChart();
+  renderPresChart();
+  renderVotersChart(voters || []);
+  renderVotersTable(voters || []);
+  renderBarometerChart();
+
+  renderSwingAnalysis(estimate || {}, analysis || {}, history || []);
+  renderFloorRange(analysis || {}, estimate || {});
+  renderSummaryTable(histLocal || []);
+  renderDetailTable(detail || []);
+  renderPollSection(smoothed || [], houseEffects || []);
+
+  renderRedistrictingBadge(redistricting || {});
+  initScenarioSim(estimate || {});
+  renderDongMap(rc);
+}
+
+function renderRedistrictingBadge(rd) {
+  const badge = document.getElementById('redistrictingBadge');
+  if (!badge) return;
+  if (!rd.has_redistricting) {
+    badge.style.display = 'none';
+    return;
+  }
+  if (rd.is_renamed_only) {
+    badge.className = 'redistricting-notice renamed';
+    badge.title = '시도 명칭 변경(강원특별자치도·전북특별자치도). 선거구 경계는 동일.';
+    badge.textContent = '▷ 명칭 변경 선거구';
+  } else {
+    const preds = (rd.predecessors || []).map(p => p.prev_region.replace(/^[^_]+_/, '')).join(', ');
+    badge.className = 'redistricting-notice';
+    badge.title = `22대 선거구 경계 변경됨\n21대 전임: ${preds}\n점선 막대는 전임 선거구 가중 투영값 (참고용)`;
+    badge.textContent = '▲ 선거구 경계 변경';
+  }
+  badge.style.display = 'inline-flex';
+}
+
+async function renderDongMap(regionCode) {
+  const row      = document.getElementById('dongMapRow');
+  const listEl   = document.getElementById('dongMapList');
+  const wikiLink = document.getElementById('dongMapWikiLink');
+  if (!row) return;
+
+  row.style.display = 'none';
+  try {
+    const data = await fetch(`${API}/region/${encodeURIComponent(regionCode)}/dongs`).then(r => r.json());
+    const dongs = data.dongs || [];
+    if (!dongs.length) return;
+
+    // 동 배지 렌더링
+    listEl.innerHTML = dongs.map(d =>
+      `<span style="display:inline-block;background:var(--accent2);border:1px solid var(--border);padding:1px 7px;margin:2px 3px 2px 0;font-size:11px">${d}</span>`
+    ).join('');
+
+    // 위키 링크
+    if (data.wiki_title) {
+      wikiLink.href = `https://ko.wikipedia.org/wiki/${encodeURIComponent(data.wiki_title)}`;
+      wikiLink.style.display = 'inline';
+    } else {
+      wikiLink.style.display = 'none';
+    }
+
+    row.style.display = '';
+  } catch(e) {
+    // 데이터 없으면 그냥 숨김 유지
+  }
+}
+
+async function renderPollSection(smoothed, houseEffects) {
+  _houseEffects = houseEffects || [];
+  renderPollChart(smoothed);
+  renderHouseEffectChart(houseEffects);
+  renderIntraChart(smoothed);
+  const totalPts = smoothed ? [...new Set(smoothed.map(d => d.date))].length : 0;
+  document.getElementById('pollCountNote').textContent =
+    totalPts > 0 ? `${totalPts}개 데이터포인트 반영` : 'PDF 미투입 — 전국 추이 없음';
+  document.getElementById('pollSection').style.display = totalPts > 0 ? '' : 'none';
+}
+
+
+// ── 유권자 구조 분석 (Nemotron 페르소나) ─────────────────────
+let _segmentData = null;
+let _availableDistricts = [];   // 이 선거구에 매핑된 전체 구/군
+let _selectedDistricts  = [];   // 현재 선택된 구/군
+const _segColors = [
+  '#1a5eb8','#0055a5','#4a90d9','#80b6f0','#a8cef5',
+  '#c8000a','#e04060','#f08090','#f5a0b0','#fad0d8',
+];
+
+async function loadVoterSegments() {
+  const rc = document.getElementById('regionSel').value;
+  if (!rc) return;
+  const btn = document.getElementById('segLoadBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 페르소나 데이터 로딩 중...';
+  document.getElementById('segLoadMsg').textContent =
+    '* Nemotron 1.9 GB 첫 로딩 시 최대 60초 소요 (이후 캐시)';
+
+  // 초기 로드: 전체 district (필터 없음)
+  _availableDistricts = [];
+  _selectedDistricts  = [];
+
+  const data = await safe(
+    fetch(`${API}/analysis/voter-segments/${encodeURIComponent(rc)}`).then(r => r.json())
+  );
+
+  if (!data || data.error) {
+    document.getElementById('segLoadMsg').textContent = `✗ ${data?.error || '로딩 실패'}`;
+    btn.disabled = false;
+    btn.textContent = '◈ 유권자 구조 분석 재시도';
+    return;
+  }
+
+  _segmentData = data;
+  document.getElementById('segLoadArea').style.display = 'none';
+  document.getElementById('segmentSection').style.display = '';
+
+  // 복합 선거구 district 선택기
+  _availableDistricts = data.available_districts || [];
+  _selectedDistricts  = data.selected_districts  || [..._availableDistricts];
+  renderDistrictSelector();
+
+  renderVoterSegments(data);
+
+  // 인구통계 병렬 로드
+  const rc2 = document.getElementById('regionSel').value;
+  fetch(`${API}/analysis/demographics/${encodeURIComponent(rc2)}`)
+    .then(r => r.json())
+    .then(d => { if (!d.error) renderDemographics(d); })
+    .catch(() => {});
+}
+
+function renderDistrictSelector() {
+  const sel = document.getElementById('districtSelector');
+  if (_availableDistricts.length <= 1) {
+    sel.style.display = 'none';
+    return;
+  }
+  // 칩 렌더링: 'province-district' → district 부분만 표시
+  document.getElementById('districtChips').innerHTML = _availableDistricts.map(d => {
+    const label = d.includes('-') ? d.split('-').slice(1).join('-') : d;
+    const isOn  = _selectedDistricts.includes(d);
+    return `<button class="district-chip${isOn ? ' on' : ''}"
+      onclick="toggleDistrict('${d}')" data-d="${d.replace(/'/g, '')}">${label}</button>`;
+  }).join('');
+  sel.style.display = '';
+}
+
+function toggleDistrict(d) {
+  const idx = _selectedDistricts.indexOf(d);
+  if (idx >= 0) {
+    if (_selectedDistricts.length <= 1) return;   // 최소 1개는 선택 유지
+    _selectedDistricts.splice(idx, 1);
+  } else {
+    _selectedDistricts.push(d);
+  }
+  // 칩 UI 즉시 반영
+  document.querySelectorAll('#districtChips .district-chip').forEach(btn => {
+    btn.classList.toggle('on', _selectedDistricts.includes(btn.dataset.d));
+  });
+}
+
+function selectAllDistricts() {
+  _selectedDistricts = [..._availableDistricts];
+  document.querySelectorAll('#districtChips .district-chip').forEach(btn => {
+    btn.classList.add('on');
+  });
+}
+
+async function applyDistrictFilter() {
+  const rc = document.getElementById('regionSel').value;
+  if (!rc || !_selectedDistricts.length) return;
+
+  const applyBtn = document.querySelector('#districtSelector .district-chip-apply');
+  applyBtn.disabled = true;
+  applyBtn.textContent = '⏳ 로딩 중...';
+
+  const param = _selectedDistricts.join(',');
+  const data = await safe(
+    fetch(`${API}/analysis/voter-segments/${encodeURIComponent(rc)}?districts=${encodeURIComponent(param)}`).then(r => r.json())
+  );
+
+  applyBtn.disabled = false;
+  applyBtn.textContent = '✔ 선택 적용';
+
+  if (!data || data.error) return;
+  _segmentData = data;
+  renderVoterSegments(data);
+
+  // 인구통계도 갱신
+  fetch(`${API}/analysis/demographics/${encodeURIComponent(rc)}?districts=${encodeURIComponent(param)}`)
+    .then(r => r.json())
+    .then(d => { if (!d.error) renderDemographics(d); })
+    .catch(() => {});
+}
+
+function renderVoterSegments(data) {
+  const segments = data.segments || [];
+
+  // 지역 표시: 복합 선거구면 선택된 구/군 목록으로 표시
+  const selDists = data.selected_districts || [];
+  const distLabel = selDists.length
+    ? selDists.map(d => d.includes('-') ? d.split('-').slice(1).join('-') : d).join(' · ')
+    : '(도 전체)';
+  document.getElementById('segProvince').textContent =
+    `◆ ${data.province} › ${distLabel}`;
+  document.getElementById('segTotal').textContent =
+    `분석 대상 페르소나 ${data.total_personas.toLocaleString()}명 | 상위 ${segments.length}개 세그먼트`;
+
+  // 도넛 차트
+  if (window._segDonut) { window._segDonut.destroy(); window._segDonut = null; }
+  const ctx = document.getElementById('segDonutChart');
+  window._segDonut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: segments.map(s => s.segment),
+      datasets: [{
+        data: segments.map(s => s.pct),
+        backgroundColor: segments.map((_, i) => _segColors[i % _segColors.length]),
+        borderWidth: 2, borderColor: '#fff',
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: c => `${c.label}: ${c.parsed.toFixed(1)}%` },
+        },
+      },
+    },
+  });
+
+  // 범례
+  document.getElementById('segDonutLegend').innerHTML = segments.map((s, i) => `
+    <div class="seg-legend-item">
+      <div class="seg-legend-dot" style="background:${_segColors[i % _segColors.length]}"></div>
+      <span style="font-weight:700;min-width:52px">${s.pct.toFixed(1)}%</span>
+      <span>${s.segment}</span>
+    </div>
+  `).join('');
+
+  // 세그먼트 카드
+  const maxPct = segments.length ? segments[0].pct : 1;
+  document.getElementById('segGrid').innerHTML = segments.map((s, i) => {
+    const h   = s.habitus || {};
+    const cap = h.capital || {};
+    const anxiety  = Array.isArray(h.core_anxiety) ? h.core_anxiety.join(' · ') : (h.core_anxiety || '');
+    const kwds     = Array.isArray(h.keywords)     ? h.keywords     : [];
+    const channels = Array.isArray(h.channel)      ? h.channel      : [];
+    const antiArr  = Array.isArray(h.anti_frame)   ? h.anti_frame   : (h.anti_frame ? [h.anti_frame] : []);
+    const color = _segColors[i % _segColors.length];
+
+    return `<div class="seg-card">
+      <div class="seg-card-header">
+        <div class="seg-rank" style="background:${color}">${i + 1}</div>
+        <div class="seg-name">${s.segment}</div>
+        <div class="seg-pct" style="color:${color}">${s.pct.toFixed(1)}%</div>
+      </div>
+      <div class="seg-pct-bar-wrap">
+        <div class="seg-pct-bar" style="width:${((s.pct / maxPct) * 100).toFixed(1)}%;background:${color}"></div>
+      </div>
+      <div class="seg-tags">
+        <span class="seg-tag seg-tag-ls">${s.life_stage}</span>
+        <span class="seg-tag seg-tag-cls">${s.class_pos}</span>
+        <span class="seg-tag seg-tag-hh">${s.household}</span>
+      </div>
+      <div class="seg-demo">◫ ${s.core_demo}</div>
+      ${h.frame ? `
+      <div class="seg-habitus">
+        <div class="seg-h-row">
+          <span class="seg-h-key">소구 프레임</span>
+          <span class="seg-h-val" style="font-weight:700;color:${color}">${h.frame}</span>
+        </div>
+        <div class="seg-frame-box" style="border-left-color:${color}">◆ ${h.hook}</div>
+        ${h.sample_phrase ? `<div class="seg-phrase">❝ "${h.sample_phrase}"</div>` : ''}
+        ${anxiety ? `<div class="seg-h-row">
+          <span class="seg-h-key">핵심 불안</span>
+          <span class="seg-h-val">${anxiety}</span>
+        </div>` : ''}
+        ${channels.length ? `<div class="seg-h-row">
+          <span class="seg-h-key">신뢰 채널</span>
+          <span class="seg-h-val">${channels.map(c => `<span class="seg-ch">${c}</span>`).join('')}</span>
+        </div>` : ''}
+        ${kwds.length ? `<div class="seg-h-row">
+          <span class="seg-h-key">키워드</span>
+          <span class="seg-h-val">${kwds.map(k => `<span class="seg-kw">${k}</span>`).join('')}</span>
+        </div>` : ''}
+        ${antiArr.length ? `<div class="seg-h-row">
+          <span class="seg-h-key">금기 프레임</span>
+          <span class="seg-h-val seg-anti">${antiArr.join(' / ')}</span>
+        </div>` : ''}
+        <div class="seg-h-row" style="margin-top:5px;font-size:11px;color:var(--muted)">
+          <span class="seg-h-key">3자본</span>
+          <span class="seg-h-val">경제 ${cap['경제'] || '-'} / 문화 ${cap['문화'] || '-'} / 사회 ${cap['사회'] || '-'}</span>
+        </div>
+      </div>` : ''}
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);text-align:right">
+        <button class="sec" onclick="exportSegmentPersonas(${i + 1})"
+          style="font-size:11px;padding:3px 10px">▽ 페르소나 원본 CSV</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 인구통계 차트 렌더링 ──────────────────────────────────────
+const _demoCharts = {};
+
+function _destroyDemo(id) {
+  if (_demoCharts[id]) { _demoCharts[id].destroy(); delete _demoCharts[id]; }
+}
+
+function _hbar(id, labels, values, colors) {
+  _destroyDemo(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  _demoCharts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors || labels.map((_, i) =>
+        `hsl(${210 + i * 15}, 60%, ${55 - i * 4}%)`), borderRadius: 3 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.raw}%` } } },
+      scales: {
+        x: { display: false, max: Math.max(...values) * 1.18 },
+        y: { ticks: { font: { size: 10 }, color: '#5a6278' }, grid: { display: false } }
+      },
+    }
+  });
+}
+
+function _donut(id, labels, values, colors) {
+  _destroyDemo(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  _demoCharts[id] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 10, padding: 6 } },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw}%` } }
+      }
+    }
+  });
+}
+
+function renderDemographics(d) {
+  document.getElementById('demoSection').style.display = '';
+
+  // 1. 생애단계 (horizontal bar)
+  const ls = d.life_stage || [];
+  _hbar('demoLifeStage', ls.map(r=>r.label), ls.map(r=>r.pct),
+    ['#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe']);
+
+  // 2. 성별 (donut)
+  const sx = d.sex || [];
+  _donut('demoSex', sx.map(r=>r.label), sx.map(r=>r.pct), ['#3b82f6','#f472b6']);
+
+  // 3. 계층 (horizontal bar)
+  const cp = d.class_pos || [];
+  _hbar('demoClass', cp.map(r=>r.label), cp.map(r=>r.pct),
+    ['#1d4ed8','#3b82f6','#93c5fd','#bfdbfe']);
+
+  // 4. 학력 (horizontal bar) — 상위 5개
+  const edu = (d.education || []).slice(0, 5);
+  _hbar('demoEdu', edu.map(r=>r.label), edu.map(r=>r.pct));
+
+  // 5. 직업군 (horizontal bar) — 상위 7개, 기타 제외
+  const occ = (d.occupation || []).filter(r => r.label !== '기타').slice(0, 7);
+  _hbar('demoOcc', occ.map(r=>r.label), occ.map(r=>r.pct));
+
+  // 6. 가구형태 (horizontal bar)
+  const hh = d.household || [];
+  _hbar('demoHousehold', hh.map(r=>r.label), hh.map(r=>r.pct),
+    ['#f59e0b','#fbbf24','#fcd34d','#fde68a','#fef3c7']);
+}
+
+function exportSegmentsCSV() {
+  const rc = document.getElementById('regionSel').value;
+  if (!rc) return;
+  const dParam = _selectedDistricts.length
+    ? `?districts=${encodeURIComponent(_selectedDistricts.join(','))}` : '';
+  window.location.href = `${API}/analysis/voter-segments/${encodeURIComponent(rc)}/export${dParam}`;
+}
+
+function exportSegmentPersonas(rank) {
+  const rc = document.getElementById('regionSel').value;
+  if (!rc) return;
+  const dParam = _selectedDistricts.length
+    ? `?districts=${encodeURIComponent(_selectedDistricts.join(','))}` : '';
+  window.location.href = `${API}/analysis/voter-segments/${encodeURIComponent(rc)}/export/${rank}${dParam}`;
+}
+
+
+// ── 광역단체장 차트 ────────────────────────────────────────────
+function renderMetroChart() {
+  const metro = _localHistData.filter(d => d.election_type === '지방_광역단체장');
+  const noDataEl = document.getElementById('metroNoData');
+  const ctx = document.getElementById('metroChart');
+  if (!ctx) return;
+  if (charts.metro) { charts.metro.destroy(); charts.metro = null; }
+  if (!metro.length) {
+    if (noDataEl) noDataEl.style.display = 'block';
+    ctx.parentElement.style.display = 'none';
+    return;
+  }
+  if (noDataEl) noDataEl.style.display = 'none';
+  ctx.parentElement.style.display = '';
+  const seqs  = [...new Set(metro.map(d => d.election_seq))].sort();
+  const labels = seqs.map(s => {
+    const row = metro.find(d => d.election_seq === s);
+    return row ? `${row.election_date?.slice(0,4)} (${s}회)` : `${s}회`;
+  });
+  const dem = seqs.map(s => metro.find(d => d.election_seq === s && d.lineage_id === '민주계')?.pct ?? null);
+  const ppp = seqs.map(s => metro.find(d => d.election_seq === s && d.lineage_id === '보수계')?.pct ?? null);
+  charts.metro = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label:'민주계', data:dem, backgroundColor:'rgba(0,85,165,0.65)', borderRadius:3 },
+      { label:'보수계', data:ppp, backgroundColor:'rgba(200,0,10,0.65)', borderRadius:3 },
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ labels:{ color:'#3a4060', font:{size:11} } },
+        tooltip:{ mode:'index', intersect:false },
+      },
+      scales:{
+        x:{ ticks:{color:'#5a6278'}, grid:{color:'#e8ebf2'} },
+        y:{ min:0, ticks:{color:'#5a6278', callback:v=>v+'%'}, grid:{color:'#e8ebf2'} },
+      },
+    },
+  });
+}
+
+// ── 대통령 선거 차트 ────────────────────────────────────────────
+function renderPresChart() {
+  const pres = _localHistData.filter(d => d.election_type === '대통령');
+  const ctx = document.getElementById('presChart');
+  if (!ctx) return;
+  if (charts.pres) { charts.pres.destroy(); charts.pres = null; }
+  if (!pres.length) { ctx.parentElement.previousElementSibling.style.display = 'none'; ctx.parentElement.style.display = 'none'; return; }
+  ctx.parentElement.previousElementSibling.style.display = '';
+  ctx.parentElement.style.display = '';
+  const seqs = [...new Set(pres.map(d => d.election_seq))].sort();
+  const labels = seqs.map(s => `${s}대`);
+  const dem = seqs.map(s => pres.find(d => d.election_seq===s && d.lineage_id==='민주계')?.pct ?? null);
+  const ppp = seqs.map(s => pres.find(d => d.election_seq===s && d.lineage_id==='보수계')?.pct ?? null);
+  charts.pres = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'민주계', data:dem, backgroundColor:'rgba(0,85,165,0.65)', borderRadius:3 },
+      { label:'보수계', data:ppp, backgroundColor:'rgba(200,0,10,0.65)', borderRadius:3 },
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ labels:{ color:'#3a4060', font:{size:11}, filter: item=>!item.text.startsWith('_') } },
+        tooltip:{ mode:'index', intersect:false, filter: item=>!item.dataset.label.startsWith('_') },
+      },
+      scales:{
+        x:{ ticks:{color:'#5a6278'}, grid:{color:'#e8ebf2'} },
+        y:{ min:0, ticks:{color:'#5a6278', callback:v=>v+'%'}, grid:{color:'#e8ebf2'} },
+      },
+    },
+  });
+}
+
+// ── 계보 트레일 (표시용 큐레이션 고정 목록) ───────────────────
+const TRAIL_DISPLAY = {
+  '민주계': ['대통합민주신당','민주당','민주통합당','새정치민주연합','더불어민주당'],
+  '보수계': ['한나라당','새누리당','자유한국당','미래통합당','국민의힘'],
+};
+const TRAIL_CURRENT = { '민주계': '더불어민주당', '보수계': '국민의힘' };
+
+function renderLineageTrail() {
+  const el = document.getElementById('lineageTrail');
+  const mkTrail = (list, cur, cls) => list.map((name, i) =>
+    `${i > 0 ? '<span class="lt-arrow">→</span>' : ''}<span class="lt-party ${cls} ${name===cur?'current':''}">${name}</span>`
+  ).join('');
+  el.innerHTML =
+    `<div class="lt-row"><span class="lt-label lt-dem-lbl">민주계</span>${mkTrail(TRAIL_DISPLAY['민주계'], TRAIL_CURRENT['민주계'], 'lt-dem')}</div>` +
+    `<div class="lt-row"><span class="lt-label lt-ppp-lbl">보수계</span>${mkTrail(TRAIL_DISPLAY['보수계'], TRAIL_CURRENT['보수계'], 'lt-ppp')}</div>`;
+  el.style.display = 'block';
+}
+
+// ── 메트릭 카드 ──────────────────────────────────────────────
+function renderMetrics(a, e) {
+  const est = e.estimates || {};
+  const dem = est['민주계'] || {}, ppp = est['보수계'] || {};
+  const gap = dem.estimated != null && ppp.estimated != null
+    ? (dem.estimated - ppp.estimated).toFixed(1) : null;
+  const gc = gap !== null && +gap > 0 ? 'c-dem' : gap !== null && +gap < 0 ? 'c-ppp' : 'c-neu';
+  const lead = gap !== null
+    ? (+gap > 0 ? '<span class="c-dem">민주계</span>' : '<span class="c-ppp">보수계</span>') + ' 우세'
+    : '-';
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric-card"><div class="lbl">현재 유리</div>
+      <div class="val" style="font-size:16px">${lead}</div>
+      <div class="sub">${a.region_name || '-'}</div></div>
+    <div class="metric-card"><div class="lbl">민주계 추정</div>
+      <div class="val c-dem">${dem.estimated != null ? (+dem.estimated).toFixed(1) + '%' : '-'}</div>
+      <div class="sub">22대 ${dem['base_22대'] != null ? (+dem['base_22대']).toFixed(1) : '-'}% | 스윙 ${dem.national_swing != null ? (dem.national_swing > 0 ? '+' : '') + (+dem.national_swing).toFixed(1) : '?'}%p</div></div>
+    <div class="metric-card"><div class="lbl">보수계 추정</div>
+      <div class="val c-ppp">${ppp.estimated != null ? (+ppp.estimated).toFixed(1) + '%' : '-'}</div>
+      <div class="sub">22대 ${ppp['base_22대'] != null ? (+ppp['base_22대']).toFixed(1) : '-'}% | 스윙 ${ppp.national_swing != null ? (ppp.national_swing > 0 ? '+' : '') + (+ppp.national_swing).toFixed(1) : '?'}%p</div></div>
+    <div class="metric-card"><div class="lbl">격차 (민주-보수)</div>
+      <div class="val ${gc}">${gap !== null ? ((+gap > 0 ? '+' : '') + gap + '%p') : '-'}</div>
+      <div class="sub">개인기 ±8%p 감안</div></div>
+    <div class="metric-card"><div class="lbl">지역 탄성계수</div>
+      <div class="val c-neu">${a.elasticity != null ? a.elasticity.toFixed(2) + 'x' : '-'}</div>
+      <div class="sub">1.0 = 전국 트렌드 동조</div></div>
+    <div class="metric-card"><div class="lbl">바닥선 (민주)</div>
+      <div class="val c-dem">${a.floor_dem != null ? (+a.floor_dem).toFixed(1) + '%' : '-'}</div>
+      <div class="sub">역대 최저 득표율</div></div>
+    <div class="metric-card"><div class="lbl">바닥선 (보수)</div>
+      <div class="val c-ppp">${a.floor_ppp != null ? (+a.floor_ppp).toFixed(1) + '%' : '-'}</div>
+      <div class="sub">역대 최저 득표율</div></div>
+    ${_renderMinshimCard()}
+    <div id="confidenceCard" class="metric-card"></div>`;
+}
+
+function _renderMinshimCard() {
+  const WEIGHT = { '국회의원': 0.8, '지방': 0.6, '대통령': 1.0 };
+  const elections = _collectElections();
+  if (!elections.length) return '';
+  let wSum = 0, wTot = 0;
+  for (const g of elections) {
+    const w = WEIGHT[g.typeKey] ?? 0.7;
+    wSum += (g.dem - g.ppp) * w;
+    wTot += w;
+  }
+  const idx = wTot ? +(wSum / wTot).toFixed(1) : null;
+  if (idx == null) return '';
+  const cc = idx > 0 ? 'c-dem' : idx < 0 ? 'c-ppp' : 'c-neu';
+  const sign = idx > 0 ? '+' : '';
+  return `<div class="metric-card"><div class="lbl">기저 민심 지수</div>
+    <div class="val ${cc}">${sign}${idx}%p</div>
+    <div class="sub">가중평균 (대선×1.0 총선×0.8 지방×0.6)</div></div>`;
+}
+
+// ── 신뢰도 점수 ──────────────────────────────────────────────
+function renderConfidence(analysis, estimate, smoothed, detail) {
+  const card = document.getElementById('confidenceCard');
+  if (!card) return;
+
+  let score = 0;
+  const breakdown = [];
+
+  // 1. 탄성계수 존재 (25점) — 선거 데이터 기반 회귀 가능
+  if (analysis.elasticity != null) {
+    score += 25;
+    breakdown.push('탄성계수 ✓');
+  } else {
+    breakdown.push('탄성계수 ✗');
+  }
+
+  // 2. 역대 선거 횟수 (최대 25점, 국회의원 기준)
+  const asmRows = detail.filter(d => (d.election_type || '국회의원') === '국회의원');
+  const nElec = [...new Set(asmRows.map(d => d.election_seq))].length;
+  const elecScore = Math.min(25, nElec * 6);
+  score += elecScore;
+  breakdown.push(`선거 ${nElec}회`);
+
+  // 3. 여론조사 최신성 (최대 30점)
+  const now = new Date();
+  const pollDates = smoothed ? [...new Set(smoothed.filter(d=>!d.all_interp).map(d=>d.date))]
+    .map(d => new Date(d)).filter(d=>!isNaN(d)) : [];
+  if (pollDates.length > 0) {
+    const latest = new Date(Math.max(...pollDates));
+    const daysSince = (now - latest) / 86400000;
+    let freshScore = 0;
+    if (daysSince <= 14)      { freshScore = 30; breakdown.push('여론조사 최신'); }
+    else if (daysSince <= 30) { freshScore = 22; breakdown.push('여론조사 양호'); }
+    else if (daysSince <= 60) { freshScore = 14; breakdown.push('여론조사 보통'); }
+    else                      { freshScore = 6;  breakdown.push('여론조사 오래됨'); }
+    score += freshScore;
+  } else {
+    breakdown.push('여론조사 없음');
+  }
+
+  // 4. 추정치 완전성 (최대 20점)
+  const est = estimate.estimates || {};
+  const hasDem = est['민주계']?.estimated != null;
+  const hasPpp = est['보수계']?.estimated != null;
+  if (hasDem && hasPpp) { score += 20; breakdown.push('추정 완전'); }
+  else if (hasDem || hasPpp) { score += 8; breakdown.push('추정 부분'); }
+  else breakdown.push('추정 불가');
+
+  // 등급
+  const grade = score >= 85 ? 'A' : score >= 65 ? 'B' : score >= 45 ? 'C' : 'D';
+  const gradeColor = { A:'#0a7a3c', B:'#1a5eb8', C:'#a06000', D:'#9a0000' }[grade];
+  const gradeLabel = { A:'매우 신뢰', B:'신뢰', C:'보통', D:'부족' }[grade];
+
+  card.innerHTML = `
+    <div class="lbl">신뢰도 점수</div>
+    <div class="val" style="color:${gradeColor};font-size:22px;line-height:1.1">${grade}
+      <span style="font-size:13px;font-weight:500">(${score}점)</span></div>
+    <div class="sub" style="color:${gradeColor};font-weight:600">${gradeLabel}</div>
+    <div class="sub" style="margin-top:4px;line-height:1.6;color:var(--muted)">${breakdown.join(' · ')}</div>`;
+}
+
+// ── 배너 ─────────────────────────────────────────────────────
+function renderBanner(e) {
+  const banner = document.getElementById('banner');
+  const est = e.estimates || {};
+  const dem = est['민주계']?.estimated, ppp = est['보수계']?.estimated;
+  banner.style.display = 'none';
+  if (!dem || !ppp) return;
+
+  // below_floor 경고 (A안)
+  const warnings = [];
+  if (est['민주계']?.below_floor) warnings.push(`민주계 추정(${dem}%) < 역대 바닥(${est['민주계'].floor}%)`);
+  if (est['보수계']?.below_floor) warnings.push(`보수계 추정(${ppp}%) < 역대 바닥(${est['보수계'].floor}%)`);
+  if (warnings.length) {
+    banner.className = 'banner conflict';
+    banner.innerHTML = `▲ 이례적 추정 — 역대 바닥선 이탈: ${warnings.join(' / ')}<br><small style="font-weight:400">탄핵 정국 등 구조적 전환기에는 역대 최저 이하도 발생 가능 (참고값으로만 활용)</small>`;
+    banner.style.display = 'block';
+    return;
+  }
+
+  const gap = Math.abs(dem - ppp);
+  if (gap <= 5) { banner.className = 'banner conflict'; banner.textContent = `▲ 경합: 격차 ${gap.toFixed(1)}%p — 개인기에 따라 역전 가능`; }
+  else if (dem > ppp) { banner.className = 'banner dem-lead'; banner.textContent = `■ 민주계 우세 (+${(dem-ppp).toFixed(1)}%p 추정)`; }
+  else { banner.className = 'banner ppp-lead'; banner.textContent = `■ 보수계 우세 (+${(ppp-dem).toFixed(1)}%p 추정)`; }
+  banner.style.display = 'block';
+}
+
+// ── 역대 선거 차트 ─────────────────────────────────────────────
+function renderHistoryChart(data, redistricting) {
+  const asm = data.filter(d => (d.election_type || '국회의원') === '국회의원');
+  const seqs = [...new Set(asm.map(d => d.election_seq))].sort();
+  const labels = seqs.map(s => `${s}대`);
+
+  // is_projected=true인 선거 회차: 전임 선거구 가중 투영값
+  const projectedSeqs = new Set(asm.filter(d => d.is_projected).map(d => d.election_seq));
+
+  // 민주계·보수계 major / minor 분리 (pct는 기타 계산용)
+  const getF = (s, lid, key) => asm.find(d => d.election_seq===s && d.lineage_id===lid)?.[key] ?? null;
+  const demMajor = seqs.map(s => getF(s, '민주계', 'major_pct'));
+  const demMinor = seqs.map(s => getF(s, '민주계', 'minor_pct'));
+  const pppMajor = seqs.map(s => getF(s, '보수계', 'major_pct'));
+  const pppMinor = seqs.map(s => getF(s, '보수계', 'minor_pct'));
+  const dem      = seqs.map(s => getF(s, '민주계', 'pct'));  // 기타 계산용 총합
+  const ppp      = seqs.map(s => getF(s, '보수계', 'pct'));
+  const other    = seqs.map((s, i) => {
+    const d = dem[i] ?? 0, p = ppp[i] ?? 0;
+    return d === 0 && p === 0 ? null : Math.max(0, +(100 - d - p).toFixed(1));
+  });
+
+  // 투영 선거구: 반투명 + 테두리로 구분 (명칭 변경만이면 동일 색상 유지)
+  const renamedOnly = !!redistricting.is_renamed_only;
+  const dimProj  = s => projectedSeqs.has(s) && !renamedOnly;
+  // major: 진한색 / minor: 연한색 / projected: 더 연하게
+  const demMajBg  = seqs.map(s => dimProj(s) ? 'rgba(0,85,165,0.22)'  : 'rgba(0,85,165,0.65)');
+  const demMinBg  = seqs.map(s => dimProj(s) ? 'rgba(0,85,165,0.10)'  : 'rgba(0,85,165,0.28)');
+  const pppMajBg  = seqs.map(s => dimProj(s) ? 'rgba(200,0,10,0.22)'  : 'rgba(200,0,10,0.65)');
+  const pppMinBg  = seqs.map(s => dimProj(s) ? 'rgba(200,0,10,0.10)'  : 'rgba(200,0,10,0.28)');
+  const otherBg   = seqs.map(s => dimProj(s) ? 'rgba(100,100,130,0.15)' : 'rgba(100,100,130,0.38)');
+
+  if (charts.history) charts.history.destroy();
+  const ctx = document.getElementById('historyChart');
+  if (!ctx) return;
+  charts.history = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label:'민주계',        data:demMajor, backgroundColor:demMajBg, stack:'dem',   borderRadius:3,
+        borderWidth:seqs.map(s=>dimProj(s)?2:0), borderColor:'rgba(0,85,165,0.5)', borderSkipped:false },
+      { label:'_민주계_minor', data:demMinor, backgroundColor:demMinBg, stack:'dem',   borderRadius:0 },
+      { label:'보수계',        data:pppMajor, backgroundColor:pppMajBg, stack:'ppp',   borderRadius:3,
+        borderWidth:seqs.map(s=>dimProj(s)?2:0), borderColor:'rgba(200,0,10,0.5)',  borderSkipped:false },
+      { label:'_보수계_minor', data:pppMinor, backgroundColor:pppMinBg, stack:'ppp',   borderRadius:0 },
+      { label:'기타',          data:other,    backgroundColor:otherBg,  stack:'other', borderRadius:3 },
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          labels:{
+            color:'#3a4060', font:{size:11},
+            filter: item => !item.text.startsWith('_'),  // minor 레이블 숨김
+          }
+        },
+        tooltip:{
+          mode:'index', intersect:false,
+          callbacks:{
+            label: (item) => {
+              if (item.dataset.label.startsWith('_')) {
+                // minor 시리즈: 0이면 표시 안 함
+                return item.raw > 0
+                  ? `  └ 비주류 +${item.raw}%`
+                  : null;
+              }
+              return ` ${item.dataset.label}: ${item.raw}%`;
+            },
+            afterTitle: (items) => {
+              const seq = seqs[items[0]?.dataIndex];
+              if (!projectedSeqs.has(seq)) return '';
+              return renamedOnly ? '※ 시도 명칭 변경 (경계 동일)' : '※ 선거구 재편 — 전임 선거구 가중 투영값';
+            },
+          }
+        },
+      },
+      scales:{
+        x:{ stacked:true, ticks:{color:'#5a6278'}, grid:{color:'#e8ebf2'} },
+        y:{ stacked:true, min:0, ticks:{color:'#5a6278', callback:v=>v+'%'}, grid:{color:'#e8ebf2'} },
+      },
+    },
+  });
+}
+
+// ── 투표율 비교 차트 (전국 vs 이 선거구, 선거종별) ─────────────────
+function renderVotersChart(data) {
+  if (charts.voters) charts.voters.destroy();
+  const ctx = document.getElementById('votersChart');
+  if (!ctx || !data || !data.length) return;
+
+  // 선거종별로 묶어서 x축 = "22대총선", "8회지방", "20대대선" 날짜순 (기초단체장 제외)
+  const sorted = [...data]
+    .filter(d => d.election_type !== '지방_기초단체장')
+    .sort((a, b) => (a.election_date||'').localeCompare(b.election_date||''));
+  const typeLabel = t => t==='국회의원' ? '총선' : t==='지방_광역단체장' ? '광역지방' : '대선';
+  const labels = sorted.map(d => `${d.election_seq}${typeLabel(d.election_type)}`);
+
+  const typeColors = { '국회의원':'#2a70c8', '지방_광역단체장':'#2a9a50', '대통령':'#8b4513' };
+  const barColors = sorted.map(d => typeColors[d.election_type] || '#888');
+  const natColors = sorted.map(d => (typeColors[d.election_type] || '#888') + '66');
+
+  charts.voters = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '이 선거구 투표율(%)',
+          data: sorted.map(d => d.turnout_pct),
+          backgroundColor: barColors,
+          borderRadius: 3,
+          barPercentage: 0.45, categoryPercentage: 0.75,
+        },
+        {
+          label: '전국 평균 투표율(%)',
+          data: sorted.map(d => d.nat_turnout_pct),
+          backgroundColor: natColors,
+          borderRadius: 3,
+          barPercentage: 0.45, categoryPercentage: 0.75,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#3a4060', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            afterLabel: item => {
+              const d = sorted[item.dataIndex];
+              const diff = d.turnout_pct != null && d.nat_turnout_pct != null
+                ? (d.turnout_pct - d.nat_turnout_pct).toFixed(1) : null;
+              return diff != null ? `  전국 대비 ${diff > 0 ? '+' : ''}${diff}%p` : '';
+            }
+          }
+        },
+      },
+      scales: {
+        x: { ticks: { color: '#5a6278', font: { size: 10 } }, grid: { color: '#e8ebf2' } },
+        y: {
+          min: 0,
+          ticks: { color: '#5a6278', callback: v => v + '%' },
+          grid: { color: '#e8ebf2' },
+          title: { display: true, text: '투표율(%)', color: '#5a6278', font: { size: 10 } },
+        },
+      },
+    },
+  });
+}
+
+// ── 투표율 테이블 ────────────────────────────────────────────
+function renderVotersTable(data) {
+  const el = document.getElementById('votersTblWrap');
+  if (!el || !data.length) return;
+  const TYPES = ['국회의원', '지방_광역단체장', '대통령'];
+  const TL = { '국회의원':'총선', '지방_광역단체장':'지방(광역)', '대통령':'대통령선거' };
+  const TAG = { '국회의원':'tag-asm', '지방_광역단체장':'tag-metro', '대통령':'tag-pres' };
+  const SEQ_SUFFIX = { '국회의원':'대', '지방_광역단체장':'회', '대통령':'대' };
+  let html = `<table class="history-tbl" style="font-size:11px"><thead>
+    <tr><th>선거</th><th>회차</th><th>선거일</th><th style="text-align:right">선거인수</th><th style="text-align:right">이 선거구</th><th style="text-align:right">전국평균</th><th style="text-align:right">대비</th></tr>
+    </thead><tbody>`;
+  for (const t of TYPES) {
+    const rows = data.filter(d => d.election_type === t).sort((a,b) => (a.election_date||'').localeCompare(b.election_date||''));
+    if (!rows.length) continue;
+    for (const r of rows) {
+      const diff = r.turnout_pct != null && r.nat_turnout_pct != null ? (r.turnout_pct - r.nat_turnout_pct).toFixed(1) : null;
+      const diffCls = diff == null ? '' : diff >= 0 ? 'c-dem' : 'c-ppp';
+      html += `<tr>
+        <td><span class="${TAG[t]}">${TL[t]}</span></td>
+        <td>${r.election_seq}${SEQ_SUFFIX[t]}</td>
+        <td style="color:var(--muted)">${r.election_date||'-'}</td>
+        <td style="text-align:right">${r.eligible_voters ? r.eligible_voters.toLocaleString() : '-'}</td>
+        <td style="text-align:right;font-weight:700">${r.turnout_pct != null ? (+r.turnout_pct).toFixed(1)+'%' : '-'}</td>
+        <td style="text-align:right;color:var(--muted)">${r.nat_turnout_pct != null ? (+r.nat_turnout_pct).toFixed(1)+'%' : '-'}</td>
+        <td style="text-align:right;font-weight:700" class="${diffCls}">${diff != null ? (diff >= 0 ? '+' : '')+diff+'%p' : '-'}</td>
+      </tr>`;
+    }
+    const validTurnouts = rows.filter(r => r.turnout_pct != null);
+    const avg = validTurnouts.length ? (validTurnouts.reduce((s,r) => s+r.turnout_pct, 0) / validTurnouts.length).toFixed(1) : '-';
+    html += `<tr style="background:var(--bg)">
+      <td colspan="5" style="text-align:right;color:var(--muted);font-size:10px;font-weight:600">${TL[t]} 평균 투표율 (이 선거구)</td>
+      <td colspan="2" style="text-align:right;font-weight:700;color:var(--accent)">${avg !== '-' ? avg+'%' : '-'}</td>
+    </tr>`;
+  }
+  el.innerHTML = html + '</tbody></table>';
+}
+
+// ── 공통 헬퍼: 선거별 dem/ppp 집계 ──────────────────────────────
+// 기초+광역 같은 회차는 평균 합산, 중복 제거
+function _collectElections() {
+  const TL  = { '국회의원':'총선', '지방_광역단체장':'지방', '대통령':'대선' };
+  const SFX = { '국회의원':'대', '지방_광역단체장':'회', '대통령':'대' };
+  const grp = {};
+  for (const d of _localHistData) {
+    if (d.election_type === '지방_기초단체장') continue; // 기초단체장 제외
+    const typeKey = d.election_type === '지방_광역단체장' ? '지방' : d.election_type;
+    const k = `${typeKey}||${d.election_seq}`;
+    if (!grp[k]) grp[k] = { type: d.election_type, typeKey, seq: d.election_seq, date: d.election_date, demSum:0, pppSum:0, demCnt:0, pppCnt:0 };
+    if (d.lineage_id === '민주계') { grp[k].demSum += d.pct; grp[k].demCnt++; }
+    if (d.lineage_id === '보수계') { grp[k].pppSum += d.pct; grp[k].pppCnt++; }
+  }
+  return Object.values(grp)
+    .map(g => ({ ...g, dem: g.demCnt ? g.demSum/g.demCnt : null, ppp: g.pppCnt ? g.pppSum/g.pppCnt : null }))
+    .filter(g => g.dem != null && g.ppp != null)
+    .sort((a, b) => (a.date||'').localeCompare(b.date||''))
+    .map(g => ({ ...g, label: `${g.seq}${SFX[g.type]} ${TL[g.type]}` }));
+}
+
+// ── 바로미터 개요 (raw gap, 가중치 없음) ─────────────────────────
+function renderBarometerChart() {
+  const elections = _collectElections();
+  const ctx = document.getElementById('barometerChart');
+  if (!ctx) return;
+  if (charts.barometer) { charts.barometer.destroy(); charts.barometer = null; }
+  if (!elections.length) return;
+
+  const gaps   = elections.map(g => +((g.dem - g.ppp).toFixed(2)));
+  const labels = elections.map(g => g.label);
+  const n = labels.length;
+  const mean = +(gaps.reduce((s,v) => s+v, 0) / n).toFixed(2);
+  const sigma = +(Math.sqrt(gaps.reduce((s,v) => s+(v-mean)**2, 0) / n)).toFixed(2);
+
+  charts.barometer = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [
+      {
+        label: '격차 (민주-보수)',
+        data: gaps,
+        backgroundColor: gaps.map(g => {
+          const dev = g - mean;
+          if (g >= 0) return dev > sigma ? 'rgba(0,85,165,0.90)' : dev < -sigma ? 'rgba(0,85,165,0.40)' : 'rgba(0,85,165,0.65)';
+          return dev < -sigma ? 'rgba(200,0,10,0.90)' : dev > sigma ? 'rgba(200,0,10,0.40)' : 'rgba(200,0,10,0.65)';
+        }),
+        borderRadius: 3,
+      },
+      { type:'line', label:`평균 (${mean>0?'+':''}${mean}%p)`, data: Array(n).fill(mean), borderColor:'rgba(80,80,80,0.7)', borderDash:[4,3], borderWidth:1.5, pointRadius:0, fill:false },
+      { type:'line', label:`+1σ (${(mean+sigma)>0?'+':''}${+(mean+sigma).toFixed(1)}%p)`, data: Array(n).fill(+(mean+sigma).toFixed(2)), borderColor:'rgba(0,85,165,0.35)', borderDash:[2,4], borderWidth:1, pointRadius:0, fill:false },
+      { type:'line', label:`-1σ (${(mean-sigma)>0?'+':''}${+(mean-sigma).toFixed(1)}%p)`, data: Array(n).fill(+(mean-sigma).toFixed(2)), borderColor:'rgba(200,0,10,0.35)', borderDash:[2,4], borderWidth:1, pointRadius:0, fill:false },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color:'#3a4060', font:{size:10} } },
+        tooltip: { callbacks: { label: item => {
+          if (item.datasetIndex !== 0) return item.dataset.label;
+          const g = elections[item.dataIndex];
+          const dev = gaps[item.dataIndex] - mean;
+          const devStr = dev >= 0 ? `+${dev.toFixed(1)}σ` : `${(dev/sigma).toFixed(1)}σ`;
+          return `격차: ${item.parsed.y>0?'+':''}${item.parsed.y}%p | 평균대비 ${dev>0?'+':''}${dev.toFixed(1)}%p (민주 ${g.dem.toFixed(1)} / 보수 ${g.ppp.toFixed(1)})`;
+        }}},
+      },
+      scales: {
+        x: { ticks: { color:'#5a6278', font:{size:9} }, grid: { color:'#e8ebf2' } },
+        y: { ticks: { color:'#5a6278', callback: v => (v>0?'+':'')+v+'%p' }, grid: { color:'#e8ebf2' } },
+      },
+    },
+  });
+}
+
+// ── 민심 Minshim 그래프 (2선: 민주계·보수계 가중 득표율) ────────────
+function renderMinshimChart() {
+  const WEIGHT = { '대통령': 1.0, '국회의원': 0.8, '지방_광역단체장': 0.6 };
+  const elections = _collectElections();
+  const ctx = document.getElementById('minshimChart');
+  if (!ctx) return;
+  if (charts.minshim) { charts.minshim.destroy(); charts.minshim = null; }
+  if (!elections.length) return;
+
+  const labels   = elections.map(g => g.label);
+  const demData  = elections.map(g => +((g.dem * (WEIGHT[g.type] || 1.0)).toFixed(2)));
+  const pppData  = elections.map(g => +((g.ppp * (WEIGHT[g.type] || 1.0)).toFixed(2)));
+
+  charts.minshim = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      {
+        label: '민주계 (가중)',
+        data: demData,
+        borderColor: '#0055a5', backgroundColor: 'rgba(0,85,165,0.08)',
+        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#0055a5',
+        tension: 0.3, fill: false,
+      },
+      {
+        label: '보수계 (가중)',
+        data: pppData,
+        borderColor: '#c8000a', backgroundColor: 'rgba(200,0,10,0.08)',
+        borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#c8000a',
+        tension: 0.3, fill: false,
+      },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color:'#3a4060', font:{size:11} } },
+        tooltip: { callbacks: { label: item => {
+          const g = elections[item.dataIndex];
+          const w = WEIGHT[g.type];
+          const raw = item.datasetIndex === 0 ? g.dem : g.ppp;
+          return `${item.dataset.label}: ${item.parsed.y.toFixed(1)}% (원값 ${raw.toFixed(1)}% × ${w})`;
+        }}},
+      },
+      scales: {
+        x: { ticks: { color:'#5a6278', font:{size:9} }, grid: { color:'#e8ebf2' } },
+        y: {
+          ticks: { color:'#5a6278', callback: v => v+'%' },
+          grid: { color:'#e8ebf2' },
+          title: { display:true, text:'가중 득표율 (%)', color:'#5a6278', font:{size:10} },
+        },
+      },
+    },
+  });
+}
+
+// ── 바닥 범위 바 ─────────────────────────────────────────────
+function renderFloorRange(a, e) {
+  const est = e.estimates || {};
+  const demCur = est['민주계']?.estimated ?? a.floor_dem;
+  const pppCur = est['보수계']?.estimated ?? a.floor_ppp;
+  const othFloor = a.floor_dem != null && a.floor_ppp != null ? Math.max(0, 100 - a.floor_dem - a.floor_ppp) : null;
+  const othCur   = demCur != null && pppCur != null ? Math.max(0, 100 - demCur - pppCur) : null;
+
+  const mkBar = (label, floor, cur, color) => {
+    if (floor == null) return '';
+    const f = +Math.min(floor, 100).toFixed(1), c = +Math.min(cur ?? floor, 100).toFixed(1);
+    return `<div class="floor-range">
+      <div class="fr-header">
+        <span class="fr-left" style="color:${color}">${label}</span>
+        <span class="fr-right">바닥 ${f}% → 현재 ${c}%</span>
+      </div>
+      <div class="fr-track">
+        <div class="fr-fill" style="width:${c}%;background:${color}80"></div>
+        <div class="fr-floor-line" style="left:${f}%"></div>
+        <span class="fr-txt-floor" style="left:${Math.min(f + 1, 80)}%">${f}%</span>
+        <span class="fr-txt-cur">${c}%</span>
+      </div>
+    </div>`;
+  };
+  document.getElementById('floorRange').innerHTML =
+    mkBar('민주계', a.floor_dem, demCur, '#0055a5') +
+    mkBar('보수계', a.floor_ppp, pppCur, '#c8000a');
+}
+
+// ── 요약 테이블 ─────────────────────────────────────────────
+function renderSummaryTable(data) {
+  const map = {};
+  for (const d of data) {
+    if (d.election_type === '지방_기초단체장') continue; // 기초단체장 제외
+    const k = `${d.election_type || '국회의원'}_${d.election_seq}`;
+    if (!map[k]) map[k] = { date: d.election_date, type: d.election_type || '국회의원', seq: d.election_seq };
+    if (d.lineage_id === '민주계') map[k].dem = d.pct;
+    if (d.lineage_id === '보수계') map[k].ppp = d.pct;
+  }
+  const fmt1 = v => v != null ? (+v).toFixed(1) + '%' : '-';
+  const sorted = Object.values(map).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const rows = sorted.map(e => {
+    const tag = e.type === '지방_광역단체장' ? `<span class="tag-metro">지방(광역) ${e.seq}회</span>`
+              : e.type === '대통령'          ? `<span class="tag-pres">${e.seq}대 대선</span>`
+              : `<span class="tag-asm">${e.seq}대 총선</span>`;
+    const gap = e.dem != null && e.ppp != null ? e.dem - e.ppp : null;
+    const gc = gap > 0 ? 'c-dem' : 'c-ppp';
+    return `<tr><td>${e.date || '-'}</td><td>${tag}</td>
+      <td class="c-dem">${fmt1(e.dem)}</td>
+      <td class="c-ppp">${fmt1(e.ppp)}</td>
+      <td class="${gc}">${gap != null ? (gap > 0 ? '+' : '') + gap.toFixed(1) + '%p' : '-'}</td></tr>`;
+  }).join('');
+  document.getElementById('historyTableSummary').innerHTML = `
+    <table class="history-tbl">
+      <thead><tr><th>선거일</th><th>선거</th><th>민주계</th><th>보수계</th><th>격차</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--muted)">데이터 없음</td></tr>'}</tbody>
+    </table>`;
+}
+
+// ── 후보별 상세 테이블 ────────────────────────────────────────
+function renderDetailTable(data) {
+  if (!data.length) { document.getElementById('historyTableDetail').innerHTML = '<div class="loading">데이터 없음</div>'; return; }
+  const grps = {};
+  for (const d of data) {
+    if (d.election_type === '지방_기초단체장') continue; // 기초단체장 제외
+    const k = `${d.election_type || '국회의원'}_${d.election_seq}`;
+    if (!grps[k]) grps[k] = { date: d.election_date, type: d.election_type || '국회의원', seq: d.election_seq, cands: [] };
+    grps[k].cands.push(d);
+  }
+  const sorted = Object.values(grps).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const rows = sorted.map(g => {
+    const tag = g.type === '지방_광역단체장' ? `<span class="tag-metro">지방(광역) ${g.seq}회</span>`
+              : g.type === '대통령'          ? `<span class="tag-pres">${g.seq}대 대선</span>`
+              : `<span class="tag-asm">${g.seq}대 총선</span>`;
+    const hdr = `<tr class="tbl-group-hdr"><td colspan="5">${g.date || ''} ${tag}</td></tr>`;
+    const cands = g.cands.sort((a, b) => (b.votes || 0) - (a.votes || 0)).map(c => {
+      const cc = c.lineage_id === '민주계' ? 'c-dem' : c.lineage_id === '보수계' ? 'c-ppp' : 'c-neu';
+      return `<tr>
+        <td class="${cc}">${c.candidate_name || '-'}</td>
+        <td style="font-size:11px;color:var(--muted)">${c.party_name || '-'}</td>
+        <td style="text-align:right">${c.votes != null ? c.votes.toLocaleString() : '-'}</td>
+        <td style="text-align:right" class="${cc}">${c.vote_pct != null ? (+c.vote_pct).toFixed(1) + '%' : '-'}</td>
+      </tr>`;
+    }).join('');
+    return hdr + cands;
+  }).join('');
+  document.getElementById('historyTableDetail').innerHTML = `
+    <table class="history-tbl">
+      <thead><tr><th>후보</th><th>정당</th><th style="text-align:right">득표수</th><th style="text-align:right">득표율</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function switchTableTab(tab) {
+  document.querySelectorAll('#tableTabBar .tab').forEach((t, i) =>
+    t.classList.toggle('active', (i === 0 && tab === 'summary') || (i === 1 && tab === 'detail')));
+  document.getElementById('historyTableSummary').style.display = tab === 'summary' ? '' : 'none';
+  document.getElementById('historyTableDetail').style.display  = tab === 'detail'  ? '' : 'none';
+}
+
+// ── 여론조사 차트 ─────────────────────────────────────────────
+function renderPollChart(data) {
+  const dem = data.filter(d => d.lineage_id === '민주계').sort((a, b) => a.date.localeCompare(b.date));
+  const ppp = data.filter(d => d.lineage_id === '보수계').sort((a, b) => a.date.localeCompare(b.date));
+
+  // 내삽 포인트 색상 분기: 내삽이면 회색, 아니면 원래 색
+  const demColors = dem.map(d => d.is_interpolated ? 'rgba(160,160,160,0.7)' : '#0055a5');
+  const pppColors = ppp.map(d => d.is_interpolated ? 'rgba(160,160,160,0.7)' : '#c8000a');
+
+  if (charts.poll) charts.poll.destroy();
+  charts.poll = new Chart(document.getElementById('pollChart'), {
+    type: 'line',
+    data: { datasets: [
+      { label: '민주계 보정평균', data: dem.map(d => ({x:d.date,y:d.avg})),
+        borderColor:'#0055a5', fill:false, tension:0.4, borderWidth:2.5,
+        pointRadius: dem.map(d => d.is_interpolated ? 4 : 2),
+        pointBackgroundColor: demColors,
+        pointStyle: dem.map(d => d.is_interpolated ? 'triangle' : 'circle'),
+        segment: { borderColor: ctx => dem[ctx.p0DataIndex]?.is_interpolated ? 'rgba(160,160,160,0.5)' : '#0055a5',
+                   borderDash: ctx => dem[ctx.p0DataIndex]?.is_interpolated ? [4,4] : [] } },
+      { label: '--- 풀링 신뢰구간', data: dem.map(d => ({x:d.date,y:d.ci_upper})), borderColor:'rgba(0,85,165,0.35)', borderDash:[4,3], fill:'+1', backgroundColor:'rgba(0,85,165,0.10)', pointRadius:0, tension:0.4, borderWidth:1 },
+      { label: '신뢰구간 하한 (민주)', data: dem.map(d => ({x:d.date,y:d.ci_lower})), borderColor:'rgba(0,85,165,0.35)', borderDash:[4,3], fill:false, pointRadius:0, tension:0.4, borderWidth:1 },
+      { label: '±8%p 개인기', data: dem.map(d => ({x:d.date,y:d.avg+8})), borderColor:'rgba(0,85,165,0.10)', fill:'+1', backgroundColor:'rgba(0,85,165,0.05)', pointRadius:0, borderWidth:0 },
+      { label: '개인기 하한 (민주)', data: dem.map(d => ({x:d.date,y:d.avg-8})), borderColor:'rgba(0,85,165,0.10)', fill:false, pointRadius:0, borderWidth:0 },
+      { label: '보수계 보정평균', data: ppp.map(d => ({x:d.date,y:d.avg})),
+        borderColor:'#c8000a', fill:false, tension:0.4, borderWidth:2.5,
+        pointRadius: ppp.map(d => d.is_interpolated ? 4 : 2),
+        pointBackgroundColor: pppColors,
+        pointStyle: ppp.map(d => d.is_interpolated ? 'triangle' : 'circle'),
+        segment: { borderColor: ctx => ppp[ctx.p0DataIndex]?.is_interpolated ? 'rgba(160,160,160,0.5)' : '#c8000a',
+                   borderDash: ctx => ppp[ctx.p0DataIndex]?.is_interpolated ? [4,4] : [] } },
+      { label: '--- 풀링 신뢰구간', data: ppp.map(d => ({x:d.date,y:d.ci_upper})), borderColor:'rgba(200,0,10,0.35)', borderDash:[4,3], fill:'+1', backgroundColor:'rgba(200,0,10,0.10)', pointRadius:0, tension:0.4, borderWidth:1 },
+      { label: '신뢰구간 하한 (보수)', data: ppp.map(d => ({x:d.date,y:d.ci_lower})), borderColor:'rgba(200,0,10,0.35)', borderDash:[4,3], fill:false, pointRadius:0, tension:0.4, borderWidth:1 },
+      { label: '±8%p 개인기', data: ppp.map(d => ({x:d.date,y:d.avg+8})), borderColor:'rgba(200,0,10,0.10)', fill:'+1', backgroundColor:'rgba(200,0,10,0.05)', pointRadius:0, borderWidth:0 },
+      { label: '개인기 하한 (보수)', data: ppp.map(d => ({x:d.date,y:d.avg-8})), borderColor:'rgba(200,0,10,0.10)', fill:false, pointRadius:0, borderWidth:0 },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color:'#3a4060', font:{size:11},
+          filter: item => !['신뢰구간 하한 (민주)','개인기 하한 (민주)','신뢰구간 하한 (보수)','개인기 하한 (보수)'].includes(item.text) } },
+        tooltip: {
+          mode:'index', intersect:false,
+          callbacks: {
+            afterTitle: (items) => {
+              const idx = items[0]?.dataIndex;
+              const isInterp = dem[idx]?.is_interpolated || ppp[idx]?.is_interpolated;
+              return isInterp ? '⚠ 내삽 추정값 (실제 데이터 없음)' : '';
+            }
+          }
+        },
+      },
+      scales: {
+        x: { type:'time', time:{unit:'month', displayFormats:{month:'yy.M'}}, ticks:{color:'#5a6278'}, grid:{color:'#e8ebf2'} },
+        y: { min:15, ticks:{color:'#5a6278', callback:v=>v+'%'}, grid:{color:'#e8ebf2'} },
+      },
+    },
+  });
+}
+
+// ── House Effect 수평 막대 ────────────────────────────────────
+function renderHouseEffectChart(data) {
+  if (!data.length) return;
+  const top = data.slice(0, 10);
+  if (charts.house) charts.house.destroy();
+  charts.house = new Chart(document.getElementById('houseChart'), {
+    type: 'bar',
+    data: {
+      labels: top.map(o => `${o.org_normalized} (${o.sample_count}건)`),
+      datasets: [{ label: '민주계 편향 (%p)',
+        data: top.map(o => o.dem_bias),
+        backgroundColor: top.map(o => o.dem_bias > 0 ? 'rgba(0,85,165,0.72)' : 'rgba(200,0,10,0.72)'),
+        borderRadius: 3,
+      }],
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.parsed.x > 0 ? '+' : ''}${ctx.parsed.x.toFixed(1)}%p (민주 편향)` } },
+      },
+      scales: {
+        x: { ticks: { color:'#5a6278', callback: v => (v>0?'+':'')+v+'%p' }, grid: { color:'#e8ebf2' } },
+        y: { ticks: { color:'#3a4060', font:{size:11} }, grid: { display:false } },
+      },
+    },
+  });
+}
+
+// ── 계보 내 점유율 ────────────────────────────────────────────
+function renderIntraChart(smoothedData) {
+  const recent = smoothedData.filter(d => (new Date() - new Date(d.date)) / 86400000 <= 42);
+  const avg = arr => arr.length ? arr.reduce((s, d) => s + (d.avg || 0), 0) / arr.length : 0;
+  const demAvg = avg(recent.filter(d => d.lineage_id === '민주계'));
+  const pppAvg = avg(recent.filter(d => d.lineage_id === '보수계'));
+  const total  = demAvg + pppAvg;
+
+  if (charts.intra) { charts.intra.destroy(); charts.intra = null; }
+  document.getElementById('intraChart').parentElement.style.display = total === 0 ? 'none' : '';
+
+  if (total === 0) {
+    document.getElementById('intraBar').innerHTML =
+      '<div style="font-size:11px;color:var(--muted);padding:8px 0">여론조사 데이터 없음 — PDF 투입 후 표시</div>';
+    return;
+  }
+
+  const dp = demAvg / total * 100, pp = pppAvg / total * 100;
+  document.getElementById('intraBar').innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">
+      민주계 ${demAvg.toFixed(1)}% / 보수계 ${pppAvg.toFixed(1)}%
+    </div>
+    <div class="intra-bar">
+      <div class="intra-seg" style="width:${dp.toFixed(1)}%;background:#0055a5">${dp>15?`민주 ${dp.toFixed(0)}%`:''}</div>
+      <div class="intra-seg" style="width:${pp.toFixed(1)}%;background:#c8000a">${pp>15?`보수 ${pp.toFixed(0)}%`:''}</div>
+    </div>`;
+
+  charts.intra = new Chart(document.getElementById('intraChart'), {
+    type: 'doughnut',
+    data: { labels: ['민주계', '보수계'],
+      datasets: [{ data: [demAvg, pppAvg], backgroundColor: ['#0055a5','#c8000a'], borderColor:'#fff', borderWidth:2 }]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: {
+      legend: { labels: { color:'#3a4060', font:{size:11} } },
+      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(1)}%` } },
+    }},
+  });
+}
+
+// ── 구도 시뮬레이터 ────────────────────────────────────────────
+const SCEN_LINEAGE_COLOR = { '민주계':'dem', '보수계':'ppp', '진보계':'prog', '제3지대':'third' };
+const SCEN_BAR_COLOR = {
+  '민주계': 'rgba(0,85,165,0.72)', '보수계': 'rgba(200,0,10,0.72)',
+  '진보계': 'rgba(255,120,0,0.72)', '제3지대': 'rgba(80,60,160,0.72)',
+  '기타':   'rgba(140,140,150,0.55)',
+};
+
+// 스타 인물 출격: partyName → slider value (0~10)
+const _starSliders = {};
+// 비례선거 캘리브레이션: party_name → 계파 내 점유율 (0~1)
+let _scenarioPropShare  = {};   // { '더불어민주당': 0.64, '조국혁신당': 0.36, ... }
+let _scenarioPropByLine = {};   // { '민주계': {당명: share, ...}, '보수계': {...} }
+
+async function initScenarioSim(estimate) {
+  _scenarioEstimate = estimate;
+  const rc = document.getElementById('regionSel').value;
+
+  // 전체 party_lineage + 비례 캘리브레이션 병렬 로드
+  const [parties, intra] = await Promise.all([
+    _allParties.length ? Promise.resolve(_allParties)
+      : fetch(`${API}/settings/lineage`).then(r => r.json()).catch(() => []),
+    rc ? fetch(`${API}/region/${encodeURIComponent(rc)}/intra-lineage`).then(r => r.json()).catch(() => [])
+       : Promise.resolve([]),
+  ]);
+  if (!_allParties.length) _allParties = parties;
+
+  // 비례 점유율 맵 구성
+  // 위성정당 → 모당 리매핑 (22대: 더불어민주연합→더불어민주당, 국민의미래→국민의힘)
+  const SATELLITE_TO_PARENT = {
+    '더불어민주연합': '더불어민주당',
+    '국민의미래':     '국민의힘',
+  };
+  _scenarioPropShare  = {};
+  _scenarioPropByLine = {};
+  const lineTotals = {};
+  for (const r of (intra || [])) {
+    if (!r.lineage_id || r.lineage_id === '기타') continue;
+    lineTotals[r.lineage_id] = (lineTotals[r.lineage_id] || 0) + (r.votes || 0);
+  }
+  for (const r of (intra || [])) {
+    if (!r.lineage_id || r.lineage_id === '기타') continue;
+    const share = lineTotals[r.lineage_id] > 0 ? r.votes / lineTotals[r.lineage_id] : 0;
+    const key = SATELLITE_TO_PARENT[r.party_name] || r.party_name;
+    _scenarioPropShare[key] = share;
+    if (!_scenarioPropByLine[r.lineage_id]) _scenarioPropByLine[r.lineage_id] = {};
+    _scenarioPropByLine[r.lineage_id][key] = share;
+  }
+
+  // 현재 활성 정당만 (valid_to 없음 = 현재도 존재)
+  const active = _allParties.filter(p => !p.valid_to && p.lineage_id !== '기타');
+  _scenarioParties = active.map(p => ({ ...p, checked: !!p.is_major }));
+  // 슬라이더 초기화 (지역 바꿀 때 리셋)
+  Object.keys(_starSliders).forEach(k => delete _starSliders[k]);
+  renderScenarioGrid();
+  renderStarBonusSection();
+  document.getElementById('scenarioCard').style.display = '';
+  document.getElementById('scenarioResult').style.display = 'none';
+}
+
+function renderScenarioGrid() {
+  const groups = {};
+  for (const p of _scenarioParties) {
+    (groups[p.lineage_id] ??= []).push(p);
+  }
+  const order = ['민주계', '보수계', '진보계', '제3지대'];
+  const html = order.filter(l => groups[l]).map(lid => `
+    <div>
+      <div class="scen-lineage-label">${lid}</div>
+      <div class="scen-party-group">
+        ${groups[lid].map(p => {
+          const psTag = `<span class="scen-inh" title="계파 친화도(inheritance)">${p.inheritance.toFixed(2)}</span>`;
+          return `
+          <label class="scen-chip ${SCEN_LINEAGE_COLOR[lid]||'other'} ${p.checked?'on':''}"
+            onclick="toggleScenParty('${p.party_name}',this)">
+            ${p.party_name}${psTag}
+          </label>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('scenarioPartyGrid').innerHTML = html;
+}
+
+function toggleScenParty(name, el) {
+  const p = _scenarioParties.find(q => q.party_name === name);
+  if (!p) return;
+  p.checked = !p.checked;
+  el.classList.toggle('on', p.checked);
+  // 체크 해제 시 슬라이더 값도 초기화
+  if (!p.checked) delete _starSliders[name];
+  renderStarBonusSection();
+}
+
+// ── 스타 인물 출격 보너스 UI ──────────────────────────────────
+const SCEN_STAR_COLOR = {
+  '민주계':  'rgba(0,85,165,0.85)',
+  '보수계':  'rgba(200,0,10,0.85)',
+  '진보계':  'rgba(255,120,0,0.85)',
+  '제3지대': 'rgba(80,60,160,0.85)',
+};
+
+function starBonus(sv) {
+  // 2차함수: (sv/10)² × 8 → 최대 8.0%p
+  return +((sv / 10) ** 2 * 8).toFixed(1);
+}
+
+function renderStarBonusSection() {
+  const el = document.getElementById('starBonusSection');
+  if (!el) return;
+  const checked = _scenarioParties.filter(p => p.checked);
+  if (!checked.length) { el.style.display = 'none'; return; }
+
+  el.style.display = '';
+  el.innerHTML = `
+    <div class="star-section-hdr">⭐ 스타 인물 출격
+      <span style="font-weight:400;color:var(--muted);font-size:10px">슬라이더 → 2차함수 보너스 (최대 +8%p) · 전체 재정규화</span>
+    </div>
+    ${checked.map(p => {
+      const sv  = _starSliders[p.party_name] ?? 0;
+      const bn  = starBonus(sv);
+      const col = SCEN_STAR_COLOR[p.lineage_id] || '#888';
+      const sid = 'sv_' + p.party_name.replace(/[^a-zA-Z가-힣]/g, '_');
+      return `<div class="star-bonus-row">
+        <span class="star-bonus-name" style="color:${col}">${p.party_name}</span>
+        <input type="range" class="star-bonus-slider" min="0" max="10" step="1" value="${sv}"
+          oninput="updateStarSlider('${p.party_name}',+this.value,'${sid}')">
+        <span class="star-bonus-val" id="${sid}">${sv > 0 ? '+'+bn+'%p' : '없음'}</span>
+      </div>`;
+    }).join('')}`;
+}
+
+function updateStarSlider(name, val, sid) {
+  _starSliders[name] = val;
+  const el = document.getElementById(sid);
+  if (el) el.textContent = val > 0 ? '+' + starBonus(val) + '%p' : '없음';
+}
+
+function runScenario() {
+  if (!_scenarioEstimate) return;
+  const est  = _scenarioEstimate.estimates || {};
+  const demT = est['민주계']?.estimated ?? 0;
+  const pppT = est['보수계']?.estimated ?? 0;
+  const othT = Math.max(0, +(100 - demT - pppT).toFixed(2));
+
+  const sel = _scenarioParties.filter(p => p.checked);
+  const byL = {};
+  for (const p of sel) (byL[p.lineage_id] ??= []).push(p);
+
+  const results = [];
+  let residual  = 0;
+
+  // 민주계 / 보수계 — inheritance 비율 분배
+  for (const [lid, pool] of [['민주계', demT], ['보수계', pppT]]) {
+    const ps = byL[lid] || [];
+    if (!ps.length) { residual += pool; continue; }
+
+    const weights = ps.map(p => p.inheritance);
+    const sumW = weights.reduce((s, w) => s + w, 0);
+    if (sumW === 0) { residual += pool; continue; }
+    ps.forEach((p, i) => results.push({
+      name: p.party_name, lineage: lid,
+      pct: +(weights[i] / sumW * pool).toFixed(1),
+    }));
+  }
+
+  // 진보계·제3지대 — other pool 분배
+  const othSel = sel.filter(p => p.lineage_id !== '민주계' && p.lineage_id !== '보수계');
+  if (othSel.length) {
+    const sumI = othSel.reduce((s, p) => s + p.inheritance, 0);
+    othSel.forEach(p => results.push({
+      name: p.party_name, lineage: p.lineage_id,
+      pct: +(p.inheritance / sumI * othT).toFixed(1),
+    }));
+  } else {
+    residual += othT;
+  }
+
+  results.sort((a, b) => b.pct - a.pct);
+  if (residual > 0.5) results.push({ name: '기타/무소속', lineage: '기타', pct: +residual.toFixed(1) });
+
+  // ── 스타 인물 출격 보너스 적용 (2차함수 → 재정규화) ──────────
+  const hasBonus = Object.values(_starSliders).some(v => v > 0);
+  if (hasBonus) {
+    results.forEach(r => {
+      const sv = _starSliders[r.name] ?? 0;
+      r.starBonusPct = sv > 0 ? starBonus(sv) : 0;
+      r.pct = +(r.pct + r.starBonusPct).toFixed(2);
+    });
+    // 전체 합산 → 100%p 재정규화
+    const total = results.reduce((s, r) => s + r.pct, 0);
+    if (total > 0) {
+      const scale = 100 / total;
+      results.forEach(r => { r.pct = +(r.pct * scale).toFixed(1); });
+    }
+    // 보너스·재정규화 후 재정렬 (1위 배지가 실제 최고치와 일치하도록)
+    results.sort((a, b) => b.pct - a.pct);
+  } else {
+    results.forEach(r => { r.starBonusPct = 0; });
+  }
+
+  const noteEl = document.getElementById('scenCalibNote');
+  if (noteEl) noteEl.innerHTML = 'inheritance 비율 분배 · 스타 보너스 후 재정규화';
+
+  renderScenarioBars(results, demT, pppT);
+}
+
+function renderScenarioBars(results, demT, pppT) {
+  const maxPct = results[0]?.pct ?? 1;
+  const winner = results[0];
+
+  // 승자 배지
+  const wColor = SCEN_BAR_COLOR[winner?.lineage] || '#888';
+  document.getElementById('scenarioWinner').innerHTML = winner
+    ? `<div class="scen-winner" style="border-color:${wColor}40;background:${wColor}15">
+        ◆ 예측 1위: <b style="color:${wColor}">${winner.name}</b> ${winner.pct}%
+        &nbsp;|&nbsp; 민주계 합산 ${results.filter(r=>r.lineage==='민주계').reduce((s,r)=>s+r.pct,0).toFixed(1)}%
+        &nbsp; 보수계 합산 ${results.filter(r=>r.lineage==='보수계').reduce((s,r)=>s+r.pct,0).toFixed(1)}%
+       </div>` : '';
+
+  // 바 목록
+  document.getElementById('scenarioBars').innerHTML = results.map(r => {
+    const col  = SCEN_BAR_COLOR[r.lineage] || '#aaa';
+    const w    = Math.round(r.pct / maxPct * 100);
+    const star = r.starBonusPct > 0
+      ? `<span class="star-mark" title="스타 보너스 +${r.starBonusPct}%p 포함">⭐</span>` : '';
+    return `<div class="scen-bar-row">
+      <div class="scen-bar-label" title="${r.name}">${r.name}${star}</div>
+      <div class="scen-bar-track">
+        <div class="scen-bar-fill" style="width:${w}%;background:${col}"></div>
+      </div>
+      <div class="scen-bar-pct">${r.pct}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('scenarioResult').style.display = '';
+}
+
+// ── 계파 설정 모달 ─────────────────────────────────────────────
+const LINEAGES = ['민주계', '보수계', '진보계', '제3지대', '기타'];
+
+/* ── 스냅샷 내보내기 ──────────────────────────────────────── */
+let _snapRunning  = false;
+let _snapPollTimer = null;
+
+function openSnapshotModal() {
+  document.getElementById('snapshotModal').classList.add('open');
+}
+
+function closeSnapshotModal() {
+  if (_snapRunning) {
+    if (!confirm('내보내기가 진행 중입니다.\n강제 종료하시겠습니까?\n(서버 작업은 계속 실행될 수 있습니다)')) return;
+    if (_snapPollTimer) clearInterval(_snapPollTimer);
+    _snapRunning = false;
+  }
+  document.getElementById('snapshotModal').classList.remove('open');
+}
+
+function _snapSetRunning(running) {
+  _snapRunning = running;
+  const btn = document.getElementById('snapRunBtn');
+  btn.disabled = running;
+  // 닫기 버튼은 비활성화하지 않음 — closeSnapshotModal()에서 confirm 처리
+}
+
+async function runExportStatic() {
+  const outPath  = document.getElementById('snapOutPath').value.trim();
+  const password = document.getElementById('snapPassword').value.trim();
+  const inclPersonas = document.getElementById('snapPersonas').checked;
+  const inclDemo     = document.getElementById('snapDemographics').checked;
+
+  if (!outPath) { alert('출력 폴더 경로를 입력하세요.'); return; }
+
+  const logWrap = document.getElementById('snapLogWrap');
+  const logEl   = document.getElementById('snapLog');
+  const msg     = document.getElementById('snapStatusMsg');
+
+  logWrap.style.display = 'block';
+  logEl.textContent = '◈ 서버에 요청 전송 중...';
+  msg.style.color = 'var(--muted)';
+  msg.textContent = '내보내기 시작 중...';
+  document.getElementById('snapProgress').textContent = '';
+  _snapSetRunning(true);
+
+  const res = await fetch(`${API}/admin/export-static`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      out_path:          outPath,
+      password:          password,
+      skip_personas:     !inclPersonas,
+      skip_demographics: !inclDemo,
+    })
+  }).then(r => r.json()).catch(() => ({ status: 'error' }));
+
+  if (res.status === 'already_running') {
+    msg.textContent = '이미 실행 중입니다. 완료 후 재시도하세요.';
+    _snapSetRunning(false);
+    return;
+  }
+  if (res.status === 'error') {
+    msg.textContent = '서버 오류 — 여조안테나가 실행 중인지 확인하세요.';
+    logEl.textContent = '';
+    _snapSetRunning(false);
+    return;
+  }
+
+  // 1.5초마다 상태 폴링
+  if (_snapPollTimer) clearInterval(_snapPollTimer);
+  const progEl = document.getElementById('snapProgress');
+  _snapPollTimer = setInterval(async () => {
+    const st = await fetch(`${API}/admin/export-static/status`).then(r => r.json()).catch(() => null);
+    if (!st) return;
+
+    // 로그 전체 표시
+    const lines = st.log || [];
+    logEl.textContent = lines.join('\n');
+    logEl.scrollTop = logEl.scrollHeight;
+
+    // 진행률 파싱: "[  3/253] RC-CODE ..." 패턴에서 추출
+    const regionLine = [...lines].reverse().find(l => /\[\s*\d+\/\d+\]/.test(l));
+    if (regionLine) {
+      const m = regionLine.match(/\[\s*(\d+)\/(\d+)\]/);
+      if (m) {
+        const cur = parseInt(m[1]), tot = parseInt(m[2]);
+        const pct = Math.round(cur / tot * 100);
+        progEl.textContent = `지역구 ${cur}/${tot} (${pct}%)`;
+        msg.textContent = `[3/4] 지역구 수집 중... ${cur}/${tot}`;
+      }
+    } else {
+      // 현재 단계 표시
+      const stepLine = [...lines].reverse().find(l => /^\[(\d+)\/(\d+)\]/.test(l));
+      if (stepLine) msg.textContent = stepLine.replace(/^\s+/, '');
+      progEl.textContent = '';
+    }
+
+    if (!st.running) {
+      clearInterval(_snapPollTimer);
+      _snapPollTimer = null;
+      _snapSetRunning(false);
+      progEl.textContent = '';
+      if (st.error) {
+        msg.textContent = '✗ 오류: ' + st.error;
+        msg.style.color = 'var(--error)';
+      } else {
+        msg.textContent = '◉ 완료! 출력 폴더에서 git push 하세요.';
+        msg.style.color = 'var(--success)';
+      }
+    }
+  }, 1500);
+}
+
+async function openLineageModal() {
+  document.getElementById('lineageModal').classList.add('open');
+  await reloadLineageModal();
+}
+
+async function reloadLineageModal() {
+  const body = document.getElementById('lineageModalBody');
+  body.innerHTML = '<div class="loading">불러오는 중...</div>';
+  _lineageConfig = await fetch(`${API}/settings/lineage`).then(r => r.json()).catch(() => []);
+  renderLineageModal();
+}
+
+function renderLineageModal() {
+  const body = document.getElementById('lineageModalBody');
+  const mkSel = (val, i) => `<select onchange="lcfg(${i},'lineage_id',this.value)">
+    ${LINEAGES.map(l => `<option ${l===val?'selected':''} value="${l}">${l}</option>`).join('')}
+  </select>`;
+
+  const rows = _lineageConfig.map((r, i) => `
+    <div class="lineage-row" data-idx="${i}">
+      <input type="text" value="${r.party_name || ''}" placeholder="정당명"
+        onchange="lcfg(${i},'party_name',this.value)">
+      ${mkSel(r.lineage_id, i)}
+      <label title="차트 진한 바 (대표정당)" style="display:flex;align-items:center;gap:3px;cursor:pointer;font-size:11px;color:var(--muted);white-space:nowrap">
+        <input type="checkbox" ${r.is_major ? 'checked' : ''}
+          onchange="lcfg(${i},'is_major',this.checked?1:0)" style="width:13px;height:13px">
+        major
+      </label>
+      <div class="inh-wrap">
+        <input type="range" min="0" max="1" step="0.05" value="${r.inheritance ?? 1}" style="width:62px"
+          oninput="lcfg(${i},'inheritance',+this.value); this.nextElementSibling.textContent=(+this.value).toFixed(2)">
+        <span class="inh-val">${(r.inheritance ?? 1).toFixed(2)}</span>
+      </div>
+      <span style="font-size:10px;color:var(--muted)">${r.valid_from||''}~${r.valid_to||'현재'}</span>
+      <input type="text" value="${r.note || ''}" placeholder="비고"
+        onchange="lcfg(${i},'note',this.value)" style="font-size:11px">
+      <button class="del-btn" onclick="deleteLineageRow(${r.id})" title="삭제">✕</button>
+    </div>`).join('');
+
+  body.innerHTML = `
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+      <b>당명</b>: 직접 수정 가능 &nbsp;|&nbsp;
+      <b>계보</b>: 드롭다운 선택 &nbsp;|&nbsp;
+      <b>major</b>: 체크 시 차트 진한 바 (대표정당), 미체크 시 연한 바 (비주류) &nbsp;|&nbsp;
+      <b>귀속률</b>: 예측 모델용 계파 충성도 &nbsp;|&nbsp;
+      <span style="color:var(--accent)">디폴트 복원: init_db.py 재실행</span>
+    </div>
+    <div class="lineage-row header">
+      <span>정당명</span><span>계보</span><span>major</span><span>귀속률</span>
+      <span>기간</span><span>비고</span><span></span>
+    </div>
+    ${rows}
+    <button class="add-row-btn" onclick="addLineageRow()">+ 새 정당 추가</button>`;
+}
+
+function lcfg(idx, field, value) {
+  if (_lineageConfig[idx]) _lineageConfig[idx][field] = value;
+}
+
+function addLineageRow() {
+  _lineageConfig.push({ id: null, party_name: '', lineage_id: '민주계', inheritance: 1.0, is_major: 0, valid_from: '', valid_to: '', note: '', _new: true });
+  renderLineageModal();
+  // 마지막 행의 당명 input에 포커스
+  const inputs = document.querySelectorAll('#lineageModalBody .lineage-row:not(.header) input[type=text]');
+  if (inputs.length) inputs[inputs.length - 3]?.focus();
+}
+
+async function deleteLineageRow(id) {
+  if (!confirm('이 정당을 삭제하시겠습니까?')) return;
+  await fetch(`${API}/settings/lineage/${id}`, { method: 'DELETE' }).catch(() => null);
+  await reloadLineageModal();
+}
+
+async function saveLineageSettings() {
+  let ok = 0, fail = 0;
+  for (const r of _lineageConfig) {
+    if (!r.party_name?.trim()) continue;
+    if (r._new || r.id == null) {
+      // 신규
+      const res = await fetch(`${API}/settings/lineage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineage_id: r.lineage_id, party_name: r.party_name,
+          valid_from: r.valid_from || null, valid_to: r.valid_to || null,
+          inheritance: r.inheritance ?? 1.0, is_major: r.is_major ?? 0, note: r.note || null }),
+      }).catch(() => null);
+      res?.ok ? ok++ : fail++;
+    } else {
+      // 수정
+      const res = await fetch(`${API}/settings/lineage/${r.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineage_id: r.lineage_id, party_name: r.party_name,
+          inheritance: r.inheritance, is_major: r.is_major ?? 0, note: r.note ?? null }),
+      }).catch(() => null);
+      res?.ok ? ok++ : fail++;
+    }
+  }
+  const msg = fail > 0 ? `저장 완료 ${ok}건 / 실패 ${fail}건` : `${ok}건 저장 완료`;
+  alert(`${msg}\n\n※ 분석값 반영은 서버에서 swing_model.py 재실행 필요`);
+  closeLineageModal();
+}
+
+function closeLineageModal() {
+  document.getElementById('lineageModal').classList.remove('open');
+}
+
+// ── DB 스냅샷 / 초기화 ──────────────────────────────────────────
+async function dbSaveDefault() {
+  if (!confirm('현재 DB 전체 상태를 디폴트 스냅샷으로 저장합니다.\n이후 초기화 시 이 시점으로 복원됩니다.\n계속하시겠습니까?')) return;
+  const r = await fetch(`${API}/admin/save-default`, { method: 'POST' });
+  const d = await r.json();
+  alert(d.message || '디폴트 저장 완료');
+}
+
+async function dbResetLineage() {
+  if (!confirm('계파 설정(party_lineage)을 디폴트 스냅샷으로 복원합니다.\n현재 계파 수정 내용이 모두 사라집니다.\n계속하시겠습니까?')) return;
+  const r = await fetch(`${API}/admin/reset-lineage`, { method: 'POST' });
+  if (!r.ok) { alert('오류: ' + (await r.text())); return; }
+  const d = await r.json();
+  alert(`계파 초기화 완료 (${d.restored}건 복원)`);
+  closeLineageModal();
+  location.reload();
+}
+
+async function dbResetAll() {
+  if (!confirm('▲ 경고: DB 전체를 디폴트 스냅샷으로 복원합니다.\n여론조사·선거결과·계파설정이 모두 초기화됩니다.\n\n정말 진행하시겠습니까?')) return;
+  if (!confirm('마지막 확인: 현재 데이터가 전부 삭제됩니다.\n디폴트 저장 이후 추가된 여조 PDF 데이터도 사라집니다.\n진행합니까?')) return;
+  const r = await fetch(`${API}/admin/reset-all`, { method: 'POST' });
+  if (!r.ok) { alert('오류: ' + (await r.text())); return; }
+  alert('전체 초기화 완료. 페이지를 새로고침합니다.');
+  location.reload();
+}
+
+// ── CSV 다운로드 ───────────────────────────────────────────────
+async function downloadSummaryCSV() {
+  const rc = document.getElementById('regionSel').value;
+  if (!rc) return alert('선거구를 선택하세요');
+  const data = await fetch(`${API}/region/${encodeURIComponent(rc)}/lineage-history?include_local=true`).then(r => r.json());
+  const map = {};
+  for (const d of data) {
+    const k = `${d.election_type||'국회의원'}_${d.election_seq}`;
+    if (!map[k]) map[k] = { date: d.election_date, type: d.election_type||'국회의원', seq: d.election_seq };
+    if (d.lineage_id === '민주계') map[k].dem = d.pct;
+    if (d.lineage_id === '보수계') map[k].ppp = d.pct;
+  }
+  const rows = Object.values(map).sort((a, b) => (a.date||'').localeCompare(b.date||''));
+  dlCsv('선거일,선거종류,대수,민주계,보수계,격차\n' +
+    rows.map(r => `${r.date||''},${r.type},${r.seq},${r.dem??''},${r.ppp??''},${r.dem!=null&&r.ppp!=null?(r.dem-r.ppp).toFixed(2):''}`).join('\n'),
+    `여조안테나_요약_${rc}.csv`);
+}
+
+async function downloadDetailCSV() {
+  const rc = document.getElementById('regionSel').value;
+  if (!rc) return alert('선거구를 선택하세요');
+  const data = await fetch(`${API}/region/${encodeURIComponent(rc)}/history`).then(r => r.json());
+  dlCsv('선거일,선거종류,대수,후보명,정당,계보,득표수,득표율,당선\n' +
+    data.map(d => `${d.election_date||''},${d.election_type||'국회의원'},${d.election_seq},${d.candidate_name||''},${d.party_name||''},${d.lineage_id||''},${d.votes??''},${d.vote_pct??''},${d.is_elected?'당선':''}`).join('\n'),
+    `여조안테나_후보별_${rc}.csv`);
+}
+
+async function downloadPollsCSV() {
+  const res = await fetch(`${API}/polls/export`);
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'polls_export.csv'; a.click();
+}
+
+function downloadBattleCSV() {
+  if (!_battleData) return alert('\uACA9\uC804\uC9C0 \uB370\uC774\uD130 \uC5C6\uC74C \u2014 \uD398\uC774\uC9C0 \uC0C8\uB85C\uACE0\uCE68 \uD6C4 \uC2DC\uB3C4');
+  const sd = _battleData.swing_dem, sp = _battleData.swing_ppp;
+  const header = '\uC2DC\uB3C4,\uC120\uAC70\uAD6C,22\uB300_\uBBFC\uC8FC(%),22\uB300_\uBCF4\uC218(%),\uBBFC\uC8FC_\uCD94\uC815(%),\uBCF4\uC218_\uCD94\uC815(%),\uACA9\uCC28(%p),\uD0C4\uC131\uACC4\uC218,\uBBFC\uC8FC\uBC14\uB2E5(%),\uBCF4\uC218\uBC14\uB2E5(%),\uBC18\uC804\uC784\uACC4(%p),22\uB300_\uC120\uAC70\uC778\uC218';
+  const rows = _battleData.regions.map(r => {
+    const el = r.elasticity ?? 1;
+    const dEst = r.dem_base != null ? +(r.dem_base + sd * el).toFixed(2) : '';
+    const pEst = r.ppp_base != null ? +(r.ppp_base + sp * el).toFixed(2) : '';
+    const gap  = dEst !== '' && pEst !== '' ? +(dEst - pEst).toFixed(2) : '';
+    return [
+      r.sido, r.region_name,
+      r.dem_base ?? '', r.ppp_base ?? '',
+      dEst, pEst, gap,
+      r.elasticity ?? '', r.floor_dem ?? '', r.floor_ppp ?? '',
+      r.flip_threshold ?? '', r.eligible_22 ?? ''
+    ].join(',');
+  });
+  dlCsv(header + '\n' + rows.join('\n'), `\uACA9\uC804\uC9C0_\uC804\uCCB4_\uC2A4\uC719\uBBFC\uC8FC${sd}\uBCF4\uC218${sp}.csv`);
+}
+
+function downloadHouseEffectCSV() {
+  if (!_houseEffects.length) return alert('\uAE30\uAD00 \uD3B8\uD5A5 \uB370\uC774\uD130 \uC5C6\uC74C');
+  const header = '\uAE30\uAD00\uBA85,\uBBFC\uC8FC\uACC4\uD3B8\uD5A5(%p),\uBCF4\uC218\uACC4\uD3B8\uD5A5(%p),\uC870\uC0AC\uAC74\uC218';
+  const rows = _houseEffects.map(o =>
+    `${o.org_normalized},${o.dem_bias ?? ''},${o.ppp_bias ?? ''},${o.sample_count ?? ''}`
+  );
+  dlCsv(header + '\n' + rows.join('\n'), '\uAE30\uAD00\uBCC4_house_effect.csv');
+}
+
+function dlCsv(csv, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = filename; a.click();
+}
+
+// ── PDF 업로드 ────────────────────────────────────────────────
+function togglePdfDrop() { document.getElementById('pdfDrop').classList.toggle('visible'); }
+function handleDrop(e) { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); uploadPdfs(e.dataTransfer.files); }
+
+async function uploadPdfs(files) {
+  const result = document.getElementById('pdfResult');
+  result.textContent = `업로드 중 (${files.length}개)...`; result.className = 'pdf-result';
+  let ins = 0, skip = 0, errs = [];
+  for (const file of files) {
+    const fd = new FormData(); fd.append('file', file);
+    try {
+      const data = await fetch(`${API}/upload-pdf`, { method:'POST', body:fd }).then(r => r.json());
+      if (data.error) { errs.push(`${file.name}: ${data.error.slice(0,100)}`); continue; }
+      ins += data.inserted; skip += data.skipped;
+    } catch { errs.push(`${file.name}: 연결 오류`); }
+  }
+  result.textContent = errs.length ? errs.join(' | ') : `◉ ${ins}건 삽입, ${skip}건 스킵`;
+  result.className = `pdf-result ${errs.length ? 'err' : 'ok'}`;
+  if (!errs.length) {
+    if (document.getElementById('regionSel').value) {
+      loadAll();
+    } else {
+      // 지역 미선택이어도 여론조사 차트는 바로 표시
+      const [smoothed, houseEffects] = await Promise.all([
+        safe(fetch(`${API}/polls/smoothed`).then(r => r.json())),
+        safe(fetch(`${API}/house-effects`).then(r => r.json())),
+      ]);
+      renderPollSection(smoothed || [], houseEffects || []);
+    }
+  }
+}
+
+// ── 스윙보터 신호 분석 ─────────────────────────────────────────
+function renderSwingAnalysis(estimate, analysis, histData) {
+  const card = document.getElementById('swingCard');
+  const el   = document.getElementById('swingAnalysis');
+  if (!el || !card) return;
+
+  const sm = estimate.swing_meta;
+  if (!sm) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  // 국회의원 lineage-history 기준 기타 추이 계산
+  const asm  = histData.filter(d => (d.election_type || '국회의원') === '국회의원');
+  const seqs = [...new Set(asm.map(d => d.election_seq))].sort();
+  const otherBySeq = seqs.map(s => {
+    const d = asm.find(r => r.election_seq === s && r.lineage_id === '민주계')?.pct ?? 0;
+    const p = asm.find(r => r.election_seq === s && r.lineage_id === '보수계')?.pct ?? 0;
+    return { seq: s, other: Math.max(0, +(100 - d - p).toFixed(1)) };
+  }).filter(r => r.other > 0);
+
+  // 최근 3개 선거 추세
+  const recent = otherBySeq.slice(-3);
+  let trendIcon = '→', trendColor = '#888', trendText = '변화 미미 (유지)';
+  if (recent.length >= 2) {
+    const delta = recent[recent.length - 1].other - recent[0].other;
+    if (delta > 2) {
+      trendIcon = '↑'; trendColor = '#c8000a';
+      trendText = `+${delta.toFixed(1)}%p 증가 → 양당 불만 누적`;
+    } else if (delta < -2) {
+      trendIcon = '↓'; trendColor = '#0055a5';
+      trendText = `${delta.toFixed(1)}%p 감소 → 한쪽으로 수렴 중`;
+    }
+  }
+
+  // 전국바람 민감도 지수 (elasticity × other_pct / 10)
+  const elast = analysis.elasticity ?? 1.0;
+  const otherPct = sm.other_pct_22 ?? 0;
+  const sensIdx = +(elast * otherPct / 10).toFixed(1);
+  const [sensLabel, sensColor] =
+    sensIdx > 3   ? ['높음', '#c8000a'] :
+    sensIdx > 1.5 ? ['보통', '#a06000'] :
+                    ['낮음', '#127a30'];
+
+  // 투표율 반전 임계
+  const ft = sm.flip_threshold;
+  const [ftText, ftColor] =
+    ft == null ? ['계산 불가', '#888'] :
+    ft < 3     ? [`${ft}%p (매우 민감)`, '#c8000a'] :
+    ft < 7     ? [`${ft}%p (민감)`,       '#a06000'] :
+                 [`${ft}%p (비교적 안정)`, '#127a30'];
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">
+      <div style="background:var(--card);border:1px solid var(--border);padding:14px">
+        <div class="lbl" style="margin-bottom:6px">기타 득표율 (22대)</div>
+        <div style="font-size:22px;font-weight:300;color:var(--muted)">${otherPct}%</div>
+        <div style="font-size:11.5px;margin-top:5px;color:${trendColor};font-weight:600">
+          ${trendIcon} ${trendText}
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:14px">
+        <div class="lbl" style="margin-bottom:6px">전국바람 민감도</div>
+        <div style="font-size:22px;font-weight:300;color:${sensColor}">${sensLabel}</div>
+        <div style="font-size:11px;margin-top:5px;color:var(--muted)">
+          탄성 ${elast.toFixed(2)} × 기타 ${otherPct}% = 지수 ${sensIdx}
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);padding:14px">
+        <div class="lbl" style="margin-bottom:6px">투표율 반전 임계</div>
+        <div style="font-size:22px;font-weight:300;color:${ftColor}">${ftText}</div>
+        <div style="font-size:11px;margin-top:5px;color:var(--muted)">
+          22대 격차 ${sm.gap_votes?.toLocaleString()}표 / 선거인 ${sm.eligible_22?.toLocaleString()}명
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.7;padding:8px 10px;background:var(--bg);border-left:3px solid var(--border);border:1px solid var(--border)">
+      <b>기타 추이</b>: 증가 = 양당 불만 누적(스윙 가능성↑) / 감소 = 어느 한쪽으로 수렴 중 &nbsp;|&nbsp;
+      <b>전국바람 민감도</b>: 탄성계수 × 기타비율 — 전국 분위기가 이 지역 결과를 좌우하는 정도 &nbsp;|&nbsp;
+      <b>투표율 임계</b>: 추가 투표자 전부 뒤처진 쪽에 투표 시 역전 필요 %p (보수적 추정)
+    </div>`;
+}
+
+// ── 공통 차트 옵션 ────────────────────────────────────────────
+function chartOpts(yLabel) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color:'#3a4060', font:{size:11} } }, tooltip: { mode:'index', intersect:false } },
+    scales: {
+      x: { ticks:{color:'#5a6278'}, grid:{color:'#e8ebf2'} },
+      y: { min:0, ticks:{color:'#5a6278', callback:v=>v+'%'}, grid:{color:'#e8ebf2'}, title:{display:true,text:yLabel,color:'#5a6278'} },
+    },
+  };
+}
+
+// ── 시작 ──────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
