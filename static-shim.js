@@ -8,6 +8,9 @@
  *   4. 스냅샷 생성 시각 배너 표시
  *
  * 이 파일은 export_static.py 가 자동으로 index.html 과 같은 위치에 복사합니다.
+ *
+ * 경로 정책: 모든 정적 파일은 './data/...' (현재 페이지 기준 상대경로)
+ *   → username.github.io/repo/ 처럼 서브경로에 배포해도 올바르게 동작.
  */
 (function () {
   'use strict';
@@ -18,23 +21,23 @@
    * API 경로(apiPath) + URLSearchParams → 정적 파일 경로 or 특수 토큰.
    *
    * 반환 값:
-   *   /data/...              → 그대로 fetch (정적 JSON)
+   *   ./data/...             → 그대로 fetch (정적 JSON, 현재 페이지 기준 상대경로)
    *   __NOOP__               → 빈 {} 응답
    *   __HEALTH__             → 헬스체크용 더미 응답
    *   __CSV_SEGMENTS__:{rc}  → voter-segments CSV 브라우저 생성
    *   __CSV_POLLS__          → polls CSV 브라우저 생성
-   *   __REGIONS_FILTER__     → /data/regions.json 에서 sido 필터링
+   *   __REGIONS_FILTER__     → ./data/regions.json 에서 sido 필터링
    */
   function resolveStaticPath(apiPath, searchParams) {
-    /* 전역 고정 매핑 */
+    /* 전역 고정 매핑 — 모두 상대경로('./'로 시작) */
     const FIXED = {
-      '/sido-list':            '/data/sido-list.json',
-      '/polls/smoothed':       '/data/polls/smoothed.json',
-      '/polls/freshness':      '/data/polls/freshness.json',
-      '/battlegrounds':        '/data/battlegrounds.json',
-      '/house-effects':        '/data/house-effects.json',
-      '/settings/lineage':     '/data/lineage.json',
-      '/party-lineage-trail':  '/data/lineage-trail.json',
+      '/sido-list':            './data/sido-list.json',
+      '/polls/smoothed':       './data/polls/smoothed.json',
+      '/polls/freshness':      './data/polls/freshness.json',
+      '/battlegrounds':        './data/battlegrounds.json',
+      '/house-effects':        './data/house-effects.json',
+      '/settings/lineage':     './data/lineage.json',
+      '/party-lineage-trail':  './data/lineage-trail.json',
       '/polls/export':         '__CSV_POLLS__',
       '/health':               '__HEALTH__',
     };
@@ -43,7 +46,7 @@
 
     /* /regions — sido 쿼리 파라미터 있을 수 있음 */
     if (apiPath === '/regions') {
-      return searchParams.has('sido') ? '__REGIONS_FILTER__' : '/data/regions.json';
+      return searchParams.has('sido') ? '__REGIONS_FILTER__' : './data/regions.json';
     }
 
     /* 관리자 / 쓰기 엔드포인트 */
@@ -61,30 +64,30 @@
     /* /region/{code}/lineage-history?include_local=true|false */
     if ((m = apiPath.match(/^\/region\/(.+?)\/lineage-history$/))) {
       return searchParams.get('include_local') === 'true'
-        ? `/data/region/${m[1]}/lineage-history-local.json`
-        : `/data/region/${m[1]}/lineage-history.json`;
+        ? `./data/region/${m[1]}/lineage-history-local.json`
+        : `./data/region/${m[1]}/lineage-history.json`;
     }
     /* /region/{code}/analysis */
     if ((m = apiPath.match(/^\/region\/(.+?)\/analysis$/)))
-      return `/data/region/${m[1]}/analysis.json`;
+      return `./data/region/${m[1]}/analysis.json`;
     /* /region/{code}/estimate */
     if ((m = apiPath.match(/^\/region\/(.+?)\/estimate$/)))
-      return `/data/region/${m[1]}/estimate.json`;
+      return `./data/region/${m[1]}/estimate.json`;
     /* /region/{code}/voters-trend */
     if ((m = apiPath.match(/^\/region\/(.+?)\/voters-trend$/)))
-      return `/data/region/${m[1]}/voters-trend.json`;
+      return `./data/region/${m[1]}/voters-trend.json`;
     /* /region/{code}/history */
     if ((m = apiPath.match(/^\/region\/(.+?)\/history$/)))
-      return `/data/region/${m[1]}/history.json`;
+      return `./data/region/${m[1]}/history.json`;
     /* /region/{code}/redistricting-info */
     if ((m = apiPath.match(/^\/region\/(.+?)\/redistricting-info$/)))
-      return `/data/region/${m[1]}/redistricting-info.json`;
+      return `./data/region/${m[1]}/redistricting-info.json`;
     /* /region/{code}/intra-lineage */
     if ((m = apiPath.match(/^\/region\/(.+?)\/intra-lineage$/)))
-      return `/data/region/${m[1]}/intra-lineage.json`;
+      return `./data/region/${m[1]}/intra-lineage.json`;
     /* /region/{code}/dongs */
     if ((m = apiPath.match(/^\/region\/(.+?)\/dongs$/)))
-      return `/data/region/${m[1]}/dongs.json`;
+      return `./data/region/${m[1]}/dongs.json`;
 
     /* /analysis/voter-segments/{code}/export → CSV */
     if ((m = apiPath.match(/^\/analysis\/voter-segments\/(.+?)\/export$/)))
@@ -94,10 +97,10 @@
       return `__CSV_SEGMENT_RANK__:${m[1]}:${m[2]}`;
     /* /analysis/voter-segments/{code} */
     if ((m = apiPath.match(/^\/analysis\/voter-segments\/(.+?)$/)))
-      return `/data/region/${m[1]}/voter-segments.json`;
+      return `./data/region/${m[1]}/voter-segments.json`;
     /* /analysis/demographics/{code} */
     if ((m = apiPath.match(/^\/analysis\/demographics\/(.+?)$/)))
-      return `/data/region/${m[1]}/demographics.json`;
+      return `./data/region/${m[1]}/demographics.json`;
 
     return '__NOOP__';
   }
@@ -141,7 +144,7 @@
   async function buildSegmentsCsv(regionCode) {
     let data;
     try {
-      data = await _orig(`/data/region/${regionCode}/voter-segments.json`).then(r => r.json());
+      data = await _orig(`./data/region/${regionCode}/voter-segments.json`).then(r => r.json());
     } catch (e) {
       return new Response('{"error":"voter-segments 데이터 없음"}',
         { status: 404, headers: { 'Content-Type': 'application/json' } });
@@ -187,7 +190,7 @@
   async function buildPollsCsv() {
     let data = [];
     try {
-      data = await _orig('/data/polls/raw.json').then(r => r.json());
+      data = await _orig('./data/polls/raw.json').then(r => r.json());
     } catch (e) { /* 데이터 없으면 빈 CSV */ }
 
     const headers = [
@@ -219,7 +222,7 @@
   /* ── 4. regions 필터 (sido 쿼리 파라미터) ─────────────────────── */
 
   async function filteredRegions(searchParams) {
-    const data = await _orig('/data/regions.json').then(r => r.json()).catch(() => []);
+    const data = await _orig('./data/regions.json').then(r => r.json()).catch(() => []);
     const sido = searchParams.get('sido');
     const result = sido ? data.filter(r => r.sido === sido) : data;
     return new Response(JSON.stringify(result),
@@ -274,7 +277,7 @@
       return buildSegmentsCsv(parts[1]);  // 전체 CSV로 대체
     }
 
-    /* ── 정적 JSON 파일 fetch */
+    /* ── 정적 JSON 파일 fetch (상대경로 './data/...') */
     return _orig(target, { method: 'GET' }).catch(err => {
       /* 파일 없으면 빈 배열/객체 반환 (UI 오류 방지) */
       console.warn(`[static-shim] ${target} 없음: ${err.message}`);
@@ -285,7 +288,7 @@
   /* ── 6. 스냅샷 정보 배너 ────────────────────────────────────────── */
 
   function showSnapshotBanner() {
-    _orig('/data/meta.json')
+    _orig('./data/meta.json')
       .then(r => r.json())
       .then(meta => {
         const ts = new Date(meta.generated_at).toLocaleString('ko-KR', {
